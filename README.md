@@ -1,0 +1,56 @@
+The purpose of this project was to learn common techniques used in
+so called "Modern C++" codebases, including but not limited to:
+
+Ownership models with reference counted pointers (UniquePtr, SharedPtr, etc).
+
+Template / Generic programming for common data structures and algorithms.
+
+Move semantics with rvalue types.
+
+Inheritance modeling.
+
+Implementing a simpler alternative to STL. (Currently supports only Linux but the architecture allows for others in principle)
+
+Simple build system.  Just call the build script for your platform and it's done. 
+If the linker yells at you for missing a library, install it through your package manager. 
+Use `./build.sh optimize` to enable optimizations.
+
+The few minimal tests are always ran with address and undefined sanitizers enabled as part of the build step.
+
+A few common or more recent ideas not explored:
+
+Exceptions.  They are disabled at the compiler flag level. 
+While I do have serious reservations about the use of exceptions for the purpose of handling 
+expected error cases (an all too common use for them in practice), 
+this was ultimately decided to simplify the scope of the project.  
+In principle the entire codebase is Exception Safe.
+
+Modules.  These complicated the build system significantly and didn't
+appear to address any actual problems in the architecture or development
+of the project.  Compilation times are already very fast due to very conservative
+use of STL, as well as a "Unity" organizational structure that keeps linking times down to a minimum.
+
+Coroutines.
+
+Concepts.
+
+--
+
+I also used this as an oppertunity to integrate LLMs more deeply into the development process.
+See the llm.txt file for details.
+
+--
+
+There is a "core" namespace that reimagines parts of the STL, as needed, as the project grew.
+It's somewhat opinionated in a few ways:
+	Global availablility so code files don't need to #include the bits and pieces they need.
+	Folders within those directories, particularly in os, house cross-platform implementations if necessary.
+
+The public facing api are provided as loose .hpp files under either containers, os, or misc directories.
+
+new and delete (and friends) have been overloaded to use a simple TLSF allocator with some a/tsan integration.
+
+Since many modern C++ features are actually exposed by the standard library (like forward and move),
+these have been imported into the global namespace and treated as language keywords.
+
+Third party libraries are included under the third_party directory.
