@@ -1,0 +1,35 @@
+No code committed to this repository was authored by a LLM*.
+
+LLMs were used throughout the development of this project, however.
+Fundementally this was a _learning exercise_.  It would short curcuit
+the learning process to blindly paste in whatever code the LLMs dreampt up.
+
+I verified / matched every response with a reference source, typically cppreference.com.
+
+While common use served as a replacement for an internet search query
+"In C++, what's an rvalue, and how are they related to move semantics?",
+often I would author code that I _thought_ or _wanted_ to work as written, 
+but compilation error messages across both Clang++ and G++ would amount to 
+"You can't do that.".  LLMs helped explain _why_ and often suggested an
+alternative way of thinking that did work in the end.  I effectively had
+several C++ tutors looking over my shoulder, ready to help whenever I had a question.
+
+One example was when I wanted to provide a Queue implementation that
+was thread safe.  At first I duplicated the existing Queue implementation and added a 
+os::Futex member - but os::Futex is declared after core::Queue in the
+declaration order from the perspective of the preprocessor. Ruh-roh!
+There appears to be a few approaches to this problem, including Modules, 
+but one LLM mentioned something I already knew but thanks to the mysteries 
+of cognition, the thought never occured to me: just add a template parameter 
+for the Mutex type, so now the Caller has control over what kind of mutex is 
+used at _instantiation time_. This works because the template engine in this 
+case runs after the preprocessor, so all definitions are 
+available, and the resulting implementation is quite simple.
+But without a helpful default, the only downside is that the Caller has to now care about this,
+tho maybe it's something they should.
+
+I found the quality of code review between poor to ok but not unservicable. 
+Importantly, where I would deviate from best practices the models were 
+reliable to point out, which helped build habits.
+
+*One singular exception is the case statement logic syntax from the build script!
