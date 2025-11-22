@@ -26,7 +26,7 @@ private:
 	
 	internal inline MemoryManager&
 	GetInstance() {
-		global MemoryManager instance;
+		thread_local global MemoryManager instance;
 		return instance;
 	}
 
@@ -44,6 +44,8 @@ private:
 	~MemoryManager() {
 		ASAN_UNPOISON(allocator, DEFAULT_ALLOCATION_BYTES_MAX);
 
+		assert(tlsf_check(allocator) == 0);
+
 		tlsf_destroy(allocator);
 
 		SYS_RELEASE_PLATFORM_VIRTUAL_MEMORY((void*)allocator, DEFAULT_ALLOCATION_BYTES_MAX);
@@ -56,7 +58,12 @@ private:
 
 thread_local auto& __memory_manager = MemoryManager::Initialize();
 
-void *Norns_Realloc(void* p, u32 bytes_count) {
+void *
+Norns_Realloc(void* p, u32 bytes_count) {
+	if (p == nullptr) {
+		return nullptr;
+	}
+
 	void* ptr = tlsf_realloc(__memory_manager.GetAllocator(), p, bytes_count);
 	ASAN_UNPOISON(ptr, tlsf_block_size(ptr));
 
@@ -67,7 +74,8 @@ void *Norns_Realloc(void* p, u32 bytes_count) {
 	return ptr;
 }
 
-void* operator new(size_t bytes_count, align_val_t alignment) {
+void* 
+operator new(size_t bytes_count, align_val_t alignment) {
 	void* ptr = tlsf_memalign(__memory_manager.GetAllocator(), (size_t)alignment, bytes_count);
 	ASAN_UNPOISON(ptr, tlsf_block_size(ptr));
 
@@ -76,12 +84,14 @@ void* operator new(size_t bytes_count, align_val_t alignment) {
 	return ptr;
 }
 
-void* operator new(size_t bytes_count) {
+void* 
+operator new(size_t bytes_count) {
 	//NOTE(Jesse): The standard dictates new's default alignment.
 	return operator new(bytes_count, align_val_t(alignof(max_align_t)));
 }
 
-void* operator new[](size_t bytes_count, align_val_t alignment) {
+void* 
+operator new[](size_t bytes_count, align_val_t alignment) {
 	void* ptr = tlsf_memalign(__memory_manager.GetAllocator(), (size_t)alignment, bytes_count);
 	ASAN_UNPOISON(ptr, tlsf_block_size(ptr));
 
@@ -90,35 +100,40 @@ void* operator new[](size_t bytes_count, align_val_t alignment) {
 	return ptr;
 }
 
-void operator delete(void* ptr, align_val_t alignment) noexcept {
+void 
+operator delete(void* ptr, align_val_t alignment) noexcept {
 	(void)alignment;
 
-	tlsf_free(__memory_manager.GetAllocator(), ptr);
-	
-	ASAN_POISON(ptr, tlsf_block_size(ptr));
+	operator delete(ptr);
 }
 
-void operator delete[](void* ptr, align_val_t alignment) noexcept {
+void 
+operator delete[](void* ptr, align_val_t alignment) noexcept {
 	(void)alignment;
 
+	operator delete(ptr);
+}
+
+void 
+operator delete(void* ptr) noexcept {
+	if (ptr == nullptr) {
+		return;
+	}
+
 	tlsf_free(__memory_manager.GetAllocator(), ptr);
-	
+
 	ASAN_POISON(ptr, tlsf_block_size(ptr));
 }
 
-void operator delete(void* ptr) noexcept {
-	tlsf_free(__memory_manager.GetAllocator(), ptr);
-
-	ASAN_POISON(ptr, tlsf_block_size(ptr));
-}
-
-void operator delete(void* ptr, size_t bytes_count) noexcept {
+void 
+operator delete(void* ptr, size_t bytes_count) noexcept {
 	(void)bytes_count;
 
 	operator delete(ptr);
 }
 
-void operator delete(void* ptr, size_t bytes_count, align_val_t alignment) noexcept {
+void 
+operator delete(void* ptr, size_t bytes_count, align_val_t alignment) noexcept {
 	(void)bytes_count;
 
 	operator delete(ptr, alignment);

@@ -22,7 +22,7 @@ public:
 
 private:
 	Window& parent;
-	Surface_RGBA* shared_ptr = nullptr; //NOTE(Jesse): Is initialized by Window().
+	Surface_RGBA* shared_ptr = nullptr; //NOTE(Jesse): Is initialized by Window::OpenWindow().
 };
 
 class Window {
@@ -133,7 +133,8 @@ private:
 	u16 width = 256;
 	u16 height = 256;
 
-	u16 bytes_per_pixel = sizeof(Surface_RGBA);
+	constexpr inline internal u32 buffer_count = 1; //TODO(Jesse): Double buffer?
+	constexpr inline internal u16 bytes_per_pixel = sizeof(Surface_RGBA);
 
 	#include PLATFORM_CPP(window/window)
 };

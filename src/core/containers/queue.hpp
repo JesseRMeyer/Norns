@@ -44,10 +44,10 @@ public:
 		return *this;
 	}
 
-	AtomicFixedSizeQueue(AtomicFixedSizeQueue& other) = delete;
+	AtomicFixedSizeQueue(AtomicFixedSizeQueue const& other) = delete;
 	
 	AtomicFixedSizeQueue& 
-	operator=(AtomicFixedSizeQueue& other) = delete;
+	operator=(AtomicFixedSizeQueue const& other) = delete;
 
 	~AtomicFixedSizeQueue() {
 		Cleanup();

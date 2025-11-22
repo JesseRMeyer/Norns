@@ -1,9 +1,11 @@
 #include "../misc/pcg.hpp"
 
-//NOTE(Jesse): Very simple hash table with no fancy bells or whistles.
 //TODO(Jesse): Rehash.  Erase.
 
-template <typename K, typename V>
+//NOTE(Jesse): This HashTable OWNS the Keys passed to it.
+
+//NOTE(Jesse): Currently admits pointer types but that is bug prone.. //requires (not is_pointer_v<K>) //HashTable<K, V> requires K to be a non-pointer type."
+template <typename K, typename V> 
 class HashTable {
 public:
 	HashTable(): Entries(1024), HashEntries(256) {
@@ -18,9 +20,9 @@ public:
 
 	template <typename U>
 	V& 
-	operator[](U&& key) {
+	operator[](U&& key) requires Hashable<K> or IsSliceCompatible<K> {
 		//NOTE(Jesse): The 0 hash value is reserved for tombstones (deleted KV pairs).
-		u32 hash = pcg32_hash((byte*)&key, sizeof(key)) | 1u;
+		u32 hash = Hash<K>{}(key) | 1u;
 
 		u32 bin_idx = hash % HashEntries.Capacity();
 		for (auto& b: HashEntries[bin_idx]) {
@@ -43,7 +45,7 @@ public:
 	}
 
 	HashTable&
-	operator=(HashTable& other) = delete;
+	operator=(HashTable const& other) = delete;
 
 	HashTable&
 	operator=(HashTable&& other) {
@@ -54,15 +56,17 @@ public:
 		Entries = move(other.Entries);
 		HashEntries = move(other.HashEntries);
 
-		other.Entries.size = 0;
-		other.HashEntries.size = 0;
-
 		return *this;
 	}
 
+	//TODO(Jesse): Handle tombstones.  May benefit from a separate
+	// Vector<bool> to track HashEntry deletions.
+	// For HashEntry, the
 	auto begin() const {
 		return &Entries[0];
 	}
+
+	//TODO(Jesse): next() const that is tombstone aware to skip deletions.
 
 	auto end() const {
 		return &Entries[Entries.Size()];
@@ -77,10 +81,11 @@ private:
 	struct Entry {
 		K k;
 		V v;
+		//b32 deleted;
 	};
 
 	f32 
-	GetLoadFactor() {
+	GetLoadFactor() { //TODO(Jesse): Factor in tombstone count.
 		return (f32)Entries.Size() / (f32)Entries.Capacity(); 
 	}
 

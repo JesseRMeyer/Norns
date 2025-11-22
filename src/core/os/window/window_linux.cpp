@@ -9,9 +9,7 @@ _OpenWindow() {
 		auto present_ext = xcb_get_extension_data(connection, &xcb_present_id);
 
 		assert(shm_ext->present and "xcb shared memory ext not available.");
-		assert(present_ext->present and "and present ext not available.");
-
-		present_first_event = present_ext->first_event;
+		assert(present_ext->present and "xcb present ext not available.");
 
 		if (not xcb_shm_query_version_reply(connection, xcb_shm_query_version_unchecked(connection), nullptr)->shared_pixmaps) {
 			//NOTE(Jesse): Not sure why, maybe NV graphics driver allocates this on the GPU without CPU mapping?
@@ -54,7 +52,7 @@ _OpenWindow() {
 
 	auto& surface_pixels = surface.GetSurfacePixels();
 	{ //NOTE(Jesse): Create shared memory segment between XCB and this application for the window bitmap
-		size_t total_bytes_count = width * height * bytes_per_pixel; //NOTE(Jesse): Current bytes_per_pixel includes scanline padding
+		size_t total_bytes_count = buffer_count * width * height * bytes_per_pixel; //NOTE(Jesse): Current bytes_per_pixel includes scanline padding
 		shm_segment = xcb_generate_id(connection);
 		auto seg_request_reply = xcb_shm_create_segment_reply(connection, xcb_shm_create_segment(connection, shm_segment, total_bytes_count, false), NULL);
 		defer(free(seg_request_reply));
@@ -62,7 +60,6 @@ _OpenWindow() {
 		assert(seg_request_reply and seg_request_reply->nfd == 1);
 
 		int shm_fd = xcb_shm_create_segment_reply_fds(connection, seg_request_reply)[0];
-		
 		surface_pixels = (Surface_RGBA*)mmap(nullptr, total_bytes_count, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
 		assert(surface_pixels != MAP_FAILED);
 
@@ -79,7 +76,7 @@ _OpenWindow() {
 	present_id = xcb_generate_id(connection);
 	xcb_present_select_input(connection, present_id, window, XCB_PRESENT_EVENT_MASK_COMPLETE_NOTIFY | XCB_PRESENT_EVENT_MASK_IDLE_NOTIFY);
 
-	{ //NOTE(Jesse): Initialize surface to white, and emit a Present to kick off the event loop.
+	{ //NOTE(Jesse): Initialize surface to white, then emit a Present to kick off the event loop.
 		for (u32 y = 0; y < height; ++y) {
 			for (u32 x = 0; x < width; ++x) {
 				surface_pixels[y * width + x] = {255, 255, 255, 0};
@@ -97,6 +94,7 @@ _OpenWindow() {
 inline void
 _Present() {
 	if (connection and surface.GetSurfacePixels()) {
+		//NOTE(Jesse): With shared pixmap there would be no need to "put".
 		xcb_shm_put_image(connection, pixmap, gfx_ctx, width, height, 
 			0, 0, width, height, 0, 0, screen->root_depth, 
 			XCB_IMAGE_FORMAT_Z_PIXMAP, 0, shm_segment, 0);
@@ -113,7 +111,7 @@ _DestroyWindow() {
 
 	if (surface.GetSurfacePixels()) {
 		xcb_shm_detach(connection, shm_segment);
-		munmap(surface.GetSurfacePixels(), width * height * bytes_per_pixel);
+		munmap(surface.GetSurfacePixels(), buffer_count * width * height * bytes_per_pixel);
 	}
 
 	xcb_free_gc(connection, gfx_ctx);
@@ -313,4 +311,3 @@ xcb_gcontext_t gfx_ctx = {};
 xcb_pixmap_t pixmap = {};
 
 u32 image_presented_count = 0;
-u8 present_first_event = 0;

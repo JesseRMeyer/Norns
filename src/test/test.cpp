@@ -38,6 +38,19 @@ int main() {
 	}
 
 	{
+		u32 bob[5] = {1, 2, 3, 4, 5};
+		auto bob_slice = Slice<u32>(bob, 5);
+
+		auto ht = HashTable<Slice<u32>, bool>();
+		ht[bob_slice] = true; //NOTE(Jesse): bob_slice is MOVED
+		assert(ht[bob_slice] == false); 
+
+		//logger << bob_slice[3]; //NOTE(Jesse): This will crash because bob_slice is now invalid.
+
+		assert(ht[Slice<u32>(bob, 5)] == true);
+	}
+
+	{
 		assert(os::Time::Now() > 0);
 
 		auto st = os::Time::StartTimer();

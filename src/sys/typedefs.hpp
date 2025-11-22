@@ -13,10 +13,16 @@ using byte = u8;
 using f32 = float;
 using f64 = double;
 
+//NOTE(Jesse): Move many _language_ features only exposed through the std
+// into the global namespace and treat them as language keywords.
+
 using std::forward;
 using std::move;
 using std::atomic; //NOTE(Jesse): To be able to use atomic<> without std reference.
 using std::nullptr_t;
+using std::is_pointer_v;
+using std::remove_pointer_t;
+using std::is_void_v;
 
 const f32 f32_max = FLT_MAX;
 const f32 f32_min = FLT_MIN;

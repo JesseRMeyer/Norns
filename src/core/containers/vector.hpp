@@ -1,7 +1,7 @@
 template <typename T>
 class Vector {
 public:
-	Vector(): data(nullptr), size(0), capacity(0) {}
+	Vector() = default;
 
 	Vector(u32 initial_capacity): data(new T[initial_capacity]{}), size(0), capacity(initial_capacity) {}
 	
@@ -9,7 +9,7 @@ public:
 		Cleanup();
 	}
 
-	Vector(Vector& other) = delete;
+	Vector(Vector const& other) = delete;
 
 	Vector(Vector&& other) {
 		data = other.data;
@@ -30,7 +30,7 @@ public:
 	}
 
 	Vector& 
-	operator=(Vector& other) = delete;
+	operator=(Vector const& other) = delete;
 
 	Vector& 
 	operator=(Vector&& other) {
@@ -87,9 +87,7 @@ public:
 private:
 	void
 	Cleanup() {
-		if (data != nullptr) {
-			delete[] data;
-		}
+		delete[] data;
 
 		data = nullptr;
 		size = 0;
