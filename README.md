@@ -9,7 +9,9 @@ Move semantics with rvalue types.
 
 Inheritance modeling.
 
-Implementing a simpler alternative to STL. (Currently supports Linux but Win32 compiles)
+Implementing a simpler alternative to STL. 
+
+Cross Platform - Tests pass for both Linux and Win32.
 
 Concepts, used with HashTable for sensible hashing defaults for common types.
 
