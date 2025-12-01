@@ -9,7 +9,9 @@ Move semantics with rvalue types.
 
 Inheritance modeling.
 
-Implementing a simpler alternative to STL. (Currently supports only Linux but the architecture allows for others in principle)
+Implementing a simpler alternative to STL. (Currently supports Linux but Win32 compiles)
+
+Concepts, used with HashTable for sensible hashing defaults for common types.
 
 Simple build system.  Just call the build script for your platform and it's done. 
 If the linker yells at you for missing a library, install it through your package manager. 
@@ -17,7 +19,7 @@ Use `./build.sh optimize` to enable optimizations.
 
 The few minimal tests are always ran with address and undefined sanitizers enabled as part of the build step.
 
-A few common or more recent ideas not explored:
+A few common or more recent ideas not explored deeply, if at all:
 
 Exceptions.  They are disabled at the compiler flag level. 
 While I do have serious reservations about the use of exceptions for the purpose of handling 
@@ -32,7 +34,7 @@ use of STL, as well as a "Unity" organizational structure that keeps linking tim
 
 Coroutines.
 
-Concepts.
+Const correctness. This may change over time.
 
 --
 

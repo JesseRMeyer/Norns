@@ -61,14 +61,15 @@ public:
 		return capacity;
 	}
 
+	template <typename U>
 	inline T&
-	Emplace(T&& t) {
+	PushBack(U&& t) {
 		if (not HasRoom()) {
 			capacity *= 2u;
 			data = (T*)Norns_Realloc(data, capacity * sizeof(T));
 		}
 
-		data[size++] = move(t);
+		data[size++] = t;
 		return data[size - 1];
 	}
 

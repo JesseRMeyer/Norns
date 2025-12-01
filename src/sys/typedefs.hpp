@@ -23,6 +23,7 @@ using std::nullptr_t;
 using std::is_pointer_v;
 using std::remove_pointer_t;
 using std::is_void_v;
+using std::exchange;
 
 const f32 f32_max = FLT_MAX;
 const f32 f32_min = FLT_MIN;

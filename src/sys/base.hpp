@@ -4,7 +4,7 @@
 
 #ifdef _WIN32
 	#define WINDOWS
-	#define PLATFORM_CPP(fn) fn##_windows.cpp
+	#define PLATFORM_CPP(fn) STR(CONCAT(fn, _windows.cpp))
 	#define PLATFORM_H(fn) STR(CONCAT(fn, _windows.hpp))
 
 #elif defined(__linux__)
@@ -14,7 +14,7 @@
 
 #elif defined(__APPLE__) && defined(__MACH__)
 	#define OSX
-	#define PLATFORM_CPP(fn) fn##_osx.cpp
+	#define PLATFORM_CPP(fn) STR(CONCAT(fn, _osx.cpp))
 	#define PLATFORM_H(fn) STR(CONCAT(fn, _osx.hpp))
 
 #endif
@@ -102,5 +102,5 @@ struct _defer {
 #define MEGABYTES(x) (KILOBYTES(1024) * (x))
 #define GIGABYTES(x) (MEGABYTES(1024) * (x))
 
-#include PLATFORM_H(includes)
-#include PLATFORM_H(base)
+#include PLATFORM_H(includes/includes)
+#include PLATFORM_H(base/base)

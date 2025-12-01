@@ -1,10 +1,10 @@
-#include "core/core.hpp"
+#include "../core/core.hpp"
 
 //TODO(Jesse): Install signal handler and test fail cases
 
 int main() {
 	StringStream logger;
-	defer(logger << "All tests passed or failed successfully!";);
+	defer(logger << "All tests passed or failed successfully!");
 
 	{
 		//NOTE(Jesse): Queue uses a head/tail index pair
@@ -43,11 +43,14 @@ int main() {
 
 		auto ht = HashTable<Slice<u32>, bool>();
 		ht[bob_slice] = true; //NOTE(Jesse): bob_slice is MOVED
-		assert(ht[bob_slice] == false); 
+		assert(ht[bob_slice] == true);
 
-		//logger << bob_slice[3]; //NOTE(Jesse): This will crash because bob_slice is now invalid.
+		auto sally_slice = Slice<u32>(bob, 4);
+		ht[move(sally_slice)] = true;
+		//logger << sally_slice[3]; //NOTE(Jesse): This will crash because sally_slice is now invalid.
 
 		assert(ht[Slice<u32>(bob, 5)] == true);
+		assert(ht[Slice<u32>(bob, 4)] == true);
 	}
 
 	{
@@ -99,11 +102,11 @@ int main() {
 
 	{
 		auto a = Vector<int>(32);
-		a.Emplace(4);
+		a.PushBack(4);
 		assert(a.Size() == 1);
 
 		int sally = 8;
-		a.Emplace(move(sally));
+		a.PushBack(move(sally));
 
 		assert(a.Size() == 2);
 

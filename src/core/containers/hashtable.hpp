@@ -39,9 +39,10 @@ public:
 
 		//PotentiallyReHash();
 
-		HashEntries[bin_idx].Emplace({hash, Entries.Size()});
 
-		return Entries.Emplace({move(forward<U>(key)), {}}).v;
+		HashEntries[bin_idx].PushBack((HashEntry){hash, Entries.Size()});
+
+		return Entries.PushBack((Entry){forward<U>(key), {}}).v;
 	}
 
 	HashTable&

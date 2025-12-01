@@ -27,8 +27,6 @@ private:
 
 class Window {
 public:
-	using Event = void*;
-
 	enum class Events {
 		Nil,
 		EscapeKey,
@@ -54,10 +52,7 @@ public:
 	}
 
 	Events WaitAndGetNextEvent() {
-		Event e = _WaitAndGetNextEvent();
-		defer(_ReleaseEvent(e));
-
-		return _ProcessEvent(e);
+		return _WaitAndGetNextEvent();
 	}
 
 	friend StringStream& 

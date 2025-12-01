@@ -133,7 +133,7 @@ _DestroyWindow() {
 }
 
 inline Events
-_ProcessEvent(const Event& event) {
+_ProcessEvent(xcb_generic_event_t* event) {
 	#define xcb_response_type_to_event_id(x) ((x)->response_type & ~0x80)
 	 
 	#define XCB_Shift_L  0xffe1
@@ -289,14 +289,16 @@ _ProcessEvent(const Event& event) {
 }
 
 inline void
-_ReleaseEvent(Event& event) {
+_ReleaseEvent(xcb_generic_event_t* event) {
 	free(event);
 	event = {};
 }
 
-inline Event
+inline Events
 _WaitAndGetNextEvent() {
-	return (Event)xcb_wait_for_event(connection);
+	xcb_generic_event_t* e = xcb_wait_for_event(connection);
+	defer(_ReleaseEvent(e));
+	return _ProcessEvent(e);
 }
 
 xcb_window_t window = {};

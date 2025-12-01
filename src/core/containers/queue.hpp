@@ -7,6 +7,7 @@ public:
 
 	AtomicFixedSizeQueue(AtomicFixedSizeQueue&& other) {
 		if (this == &other) {
+			//NOTE(Jesse): Bug?
 			return;
 		}
 
@@ -58,8 +59,9 @@ public:
 	Put(U&& item) {
 		assert(HasRoom());
 
+		defer(head_idx = (head_idx + 1) % capacity);
+
 		data[head_idx] = forward<U>(item);
-		head_idx = (head_idx + 1) % capacity; 
 	}
 
 	inline T&
@@ -79,10 +81,9 @@ public:
 	Pop() { 
 		assert(not IsEmpty());
 
-		T result = data[tail_idx];
-		tail_idx = (tail_idx + 1) % capacity;
-
-		return result; 
+		defer(tail_idx = (tail_idx + 1) % capacity);
+		
+		return move(data[tail_idx]); 
 	}
 
 	inline bool 
@@ -108,10 +109,8 @@ public:
 protected:
 	void 
 	Cleanup() {
-		if (data != nullptr) {
-			delete[] data;
-			data = nullptr;
-		}
+		delete[] data;
+		data = nullptr;
 
 		head_idx = 0;
 		tail_idx = 0;

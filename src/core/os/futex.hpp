@@ -8,9 +8,7 @@ public:
 
 	Futex(Futex& other): s(other.s) {}
 
-	Futex(Futex&& other): s(other.s) {
-		other.s = nullptr;
-	}
+	Futex(Futex&& other): s(exchange(other.s, {})) {}
 
 	~Futex() {
 		if (s == nullptr) {

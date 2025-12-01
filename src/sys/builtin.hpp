@@ -1,3 +1,15 @@
+#ifdef min
+#undef min
+#endif
+
+#ifdef max
+#undef max
+#endif
+
+#ifdef abs
+#undef abs
+#endif
+
 template<class T>
 const T& min(const T& a, const T& b) {
 	return a <= b ? a : b;
@@ -144,13 +156,13 @@ struct Hash;
 
 template<Hashable T>
 struct Hash<T> {
-	constexpr u32 operator()(T& v) {
-		return pcg32_hash((byte*)&v, sizeof(v));
+	template <typename U>
+	constexpr u32 operator()(U&& v) {
+		return pcg32_hash((byte*)&v, sizeof(T));
 	}
 
 	constexpr u32 operator()(T* v) {
-		using base_type = remove_pointer_t<decltype(v)>;
-		return pcg32_hash((byte*)v, sizeof(base_type));
+		return pcg32_hash((byte*)v, sizeof(T));
 	}
 };
 
