@@ -31,7 +31,7 @@ _Now() {
 
 inline internal void
 _Sleep(Second duration) {
-	Sleep((DWORD)SecondsToMili(duration));
+	::Sleep((DWORD)SecondsToMili(duration)); //NOTE(Jesse): Call Win32's Sleep -- not our wrapper!
 }
 
 LARGE_INTEGER qp_frequency = {};

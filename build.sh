@@ -48,8 +48,8 @@ GCC_CHECK_COMMAND="g++-14 $BASE_BUILD_COMMAND $GCC_IGNORE_WARNINGS -fsyntax-only
 $CLANG_BUILD_COMMAND -Xclang --compress-debug-sections=zstd &
 
 #Build Win32
-#WIN32_LIBS="-lkernel32 -lSynchronization -lUser32 -llibvcruntime"
-#wine /home/j/LLVM-21-1-6-Win32/bin/clang++.exe $PRIMARY_SRC_FILE $WARN_FLAGS $BEHAVIOR_FLAGS $MATH_FLAGS $OPT_FLAGS -o build/Norns_v3_win32 -flto -fuse-ld=lld -march=x86-64-v3 -Xmicrosoft-windows-sys-root /home/j/MSVC/msvc/ $WIN32_LIBS &
+WIN32_LIBS="-lkernel32 -lSynchronization -lUser32 -llibvcruntime"
+wine /home/j/LLVM-21-1-6-Win32/bin/clang++.exe $PRIMARY_SRC_FILE $WARN_FLAGS $BEHAVIOR_FLAGS $MATH_FLAGS $OPT_FLAGS -o build/Norns_v3_win32 -flto -fuse-ld=lld -march=x86-64-v3 -Xmicrosoft-windows-sys-root /home/j/MSVC/msvc/ $WIN32_LIBS &
 
 #Apparently something like clang-cl -fuse-ld=lld -target x86_64-pc-windows-msvc -winsysroot folder/with/msvcandsdk file.c can work too (no need for wine).
 
@@ -59,17 +59,16 @@ $CLANG_BUILD_COMMAND -Xclang --compress-debug-sections=zstd &
 
 PRIMARY_TEST_FILE="src/test/test.cpp"
 TEST_BUILD_COMMAND=" $PRIMARY_TEST_FILE $WARN_FLAGS $BEHAVIOR_FLAGS $MATH_FLAGS $OPT_FLAGS $LIBS -o build/Norns_Test_v3 -flto -fuse-ld=lld -march=x86-64-v3 -Isrc -DASAN -fsanitize=address,undefined"
-CLANG_BUILD_COMMAND="$COMPILER $TEST_BUILD_COMMAND -Xclang --compress-debug-sections=zstd"
+CLANG_BUILD_COMMAND="$COMPILER $TEST_BUILD_COMMAND"
 
-$CLANG_BUILD_COMMAND &
+$CLANG_BUILD_COMMAND -Xclang --compress-debug-sections=zstd &
 
-#NOTE(Jesse): Wine crashes for some reason: err:virtual:virtual_setup_exception stack overflow
-#wine /home/j/LLVM-21-1-6-Win32/bin/clang++.exe $PRIMARY_TEST_FILE $WARN_FLAGS $BEHAVIOR_FLAGS $MATH_FLAGS $OPT_FLAGS -o build/Norns_Test_v3_win32 -flto -fuse-ld=lld -march=x86-64-v3 -Xmicrosoft-windows-sys-root /home/j/MSVC/msvc/ $WIN32_LIBS &
+wine /home/j/LLVM-21-1-6-Win32/bin/clang++.exe $PRIMARY_TEST_FILE $WARN_FLAGS $BEHAVIOR_FLAGS $MATH_FLAGS $OPT_FLAGS -o build/Norns_Test_v3_win32.exe -flto -fuse-ld=lld -march=x86-64-v3 -Xmicrosoft-windows-sys-root /home/j/MSVC/msvc/ $WIN32_LIBS -Wl,/STACK:2097152 &
 
 wait $(jobs -p)
 
 ./build/Norns_Test_v3
-#wine build/Norns_Test_v3_win32
+wine build/Norns_Test_v3_win32.exe
 
 if $ANALYZE; then
   BASE_BUILD_COMMAND+=" --analyze"
