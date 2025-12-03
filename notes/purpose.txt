@@ -9,7 +9,20 @@ Move semantics with rvalue types.
 
 Inheritance modeling.
 
-Implementing a simpler alternative to STL. (Currently supports only Linux but the architecture allows for others in principle)
+Implementing a simpler alternative to STL, currently provided, in various stages of completeness:
+* HashTable
+* Vector
+* Queue
+* Heap
+* PriorityQueue
+* PCG random number generator (used as hashtable hashing function)
+* Futex
+* Threads
+* Slice
+* Window Message Queue
+* Time
+
+Cross Platform - Tests pass for both Linux and Win32.
 
 Concepts, used with HashTable for sensible hashing defaults for common types.
 
@@ -17,7 +30,28 @@ Simple build system.  Just call the build script for your platform and it's done
 If the linker yells at you for missing a library, install it through your package manager. 
 Use `./build.sh optimize` to enable optimizations.
 
-The few minimal tests are always ran with address and undefined sanitizers enabled as part of the build step.
+Tests are always ran as part of the build step, with address and undefined sanitizers enabled.
+
+There is a "core" namespace that reimagines parts of the STL, as needed, as the project grew.
+It's somewhat opinionated in a few ways:
+	Global availablility so code files don't need to #include the bits and pieces they need.
+	Folders within those directories, particularly in os, house cross-platform implementations if necessary.
+
+The public facing api are provided as loose .hpp files under either containers, os, or misc directories.
+
+new and delete (and friends) have been overloaded to use a simple TLSF allocator with some a/tsan integration.
+
+Since many modern C++ features are actually exposed by the standard library (like forward and move),
+these have been imported into the global namespace and treated as language keywords.
+
+Third party libraries are included under the third_party directory.
+
+A "game" is being written in the game directory that acts as a kind of holistic test. It's
+cross platform, uses a client-server architecture where the platform message queue is
+ran on a separate thread than the game thread.  The game thread will feature multithreaded A* path finding, where you are a Momma Duck escorting a dozen ducklings across a map to safety navigate
+currents of flowing water.  The 2D renderer will be multithreaded in software on the CPU.
+
+--
 
 A few common or more recent ideas not explored deeply, if at all:
 
@@ -40,19 +74,3 @@ Const correctness. This may change over time.
 
 I also used this as an oppertunity to integrate LLMs more deeply into the development process.
 See the llm.txt file for details.
-
---
-
-There is a "core" namespace that reimagines parts of the STL, as needed, as the project grew.
-It's somewhat opinionated in a few ways:
-	Global availablility so code files don't need to #include the bits and pieces they need.
-	Folders within those directories, particularly in os, house cross-platform implementations if necessary.
-
-The public facing api are provided as loose .hpp files under either containers, os, or misc directories.
-
-new and delete (and friends) have been overloaded to use a simple TLSF allocator with some a/tsan integration.
-
-Since many modern C++ features are actually exposed by the standard library (like forward and move),
-these have been imported into the global namespace and treated as language keywords.
-
-Third party libraries are included under the third_party directory.

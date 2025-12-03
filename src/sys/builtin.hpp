@@ -10,18 +10,41 @@
 #undef abs
 #endif
 
+//NOTE(Jesse): Unintuitive to see these as structs
+// but this allows for generic types like
+// PriorityQueue to template over the provided
+// operator since they ARE types - not functions!
 template<class T>
-const T& min(const T& a, const T& b) {
+struct less {
+	constexpr bool 
+	operator()(const T& a, const T& b) const {
+		return a < b;
+	}
+};
+
+template<class T>
+struct greater {
+	constexpr bool 
+	operator()(const T& a, const T& b) const {
+		return a > b;
+	}
+};
+
+template<class T>
+const T& 
+min(const T& a, const T& b) {
 	return a <= b ? a : b;
 }
 
 template<class T>
-const T& max(const T& a, const T& b) {
+const T& 
+max(const T& a, const T& b) {
 	return a >= b ? a : b;
 }
 
 template<class T>
-const T& abs(const T& a) {
+const T& 
+abs(const T& a) {
 	return a >= 0 ? a : -a;
 }
 
@@ -38,6 +61,12 @@ concept Pointer = __is_pointer(T);
 
 template<typename T>
 concept Integral = __is_integral(T);
+
+template<typename T>
+concept Real = __is_floating_point(T);
+
+template<typename T>
+concept Arithmetic = Integral<T> or Real<T>;
 
 template<typename T>
 concept Enum = __is_enum(T);

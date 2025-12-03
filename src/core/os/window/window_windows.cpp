@@ -16,7 +16,7 @@ _WaitAndGetNextEvent() {
 void 
 _DestroyWindow() {
 	if (main_window_handle != nullptr) {
-		DestroyWindow(main_window_handle);
+		::DestroyWindow(main_window_handle);
 	}
 
 	main_window_handle = nullptr;
@@ -85,7 +85,7 @@ _OpenWindow() {
 		(HWND)NULL, (HMENU)NULL, HINST_THISCOMPONENT, (LPVOID)NULL); 
 	assert(main_window_handle != nullptr);
 
-	ShowWindow(main_window_handle, SW_NORMAL); 
+	::ShowWindow(main_window_handle, SW_NORMAL); 
 }
 
 HWND main_window_handle = {};

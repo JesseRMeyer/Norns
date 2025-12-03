@@ -2,15 +2,8 @@ template <typename T>
 class Vector {
 public:
 	Vector() = default;
-
 	Vector(u32 initial_capacity): data(new T[initial_capacity]{}), size(0), capacity(initial_capacity) {}
-	
-	~Vector() {
-		Cleanup();
-	}
-
 	Vector(Vector const& other) = delete;
-
 	Vector(Vector&& other) {
 		data = other.data;
 		size = other.size;
@@ -19,6 +12,9 @@ public:
 		other.data = nullptr;
 		other.size = 0;
 		other.capacity = 0;
+	}
+	~Vector() {
+		Cleanup();
 	}
 
 	auto begin() const {
@@ -56,6 +52,11 @@ public:
 		return size < capacity;
 	}
 
+	inline bool
+	Empty() {
+		return not HasRoom();
+	}
+
 	inline u32
 	Capacity() {
 		return capacity;
@@ -69,7 +70,7 @@ public:
 			data = (T*)Norns_Realloc(data, capacity * sizeof(T));
 		}
 
-		data[size++] = t;
+		data[size++] = forward<U>(t);
 		return data[size - 1];
 	}
 
@@ -80,9 +81,28 @@ public:
 		return data[idx];
 	}
 
+	T 
+	PopBack() {
+		assert(size > 0);
+
+		return data[--size];
+	}
+
 	u32 
 	Size() {
 		return size;
+	}
+
+	T&
+	Back() {
+		return data[size - 1];
+	}
+
+	T&
+	Front() {
+		assert(size > 0);
+		
+		return data[0];
 	}
 
 private:

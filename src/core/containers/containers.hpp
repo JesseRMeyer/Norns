@@ -1,3 +1,5 @@
 #include "vector.hpp"
 #include "queue.hpp"
 #include "hashtable.hpp"
+#include "heap.hpp"
+#include "priority_queue.hpp"

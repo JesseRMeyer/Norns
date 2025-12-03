@@ -4,7 +4,7 @@ LLMs were used throughout the development of this project, however.
 Fundementally this was a _learning exercise_.  It would short curcuit
 the learning process to blindly paste in whatever code the LLMs dreampt up.
 
-I verified / matched every response with a reference source, typically cppreference.com.
+I verified / matched every response with a reference source, where possible, typically cppreference.com.
 
 While common use served as a replacement for an internet search query
 "In C++, what's an rvalue, and how are they related to move semantics?",
@@ -27,6 +27,24 @@ case runs after the preprocessor, so all definitions are
 available, and the resulting implementation is quite simple.
 But without a helpful default, the only downside is that the Caller has to now care about this,
 tho maybe it's something they should.
+
+They were especially helpful diagnosing problems around template syntax, and their stages of compilation.
+For instance, the Heap class is polymorphic over comparison operators,
+so the user can access a Min or Max heap so as long as the provided
+operator satifies both > and < operators on the priority type.  But in practice they request
+a PriorityQueue that inherits from Heap as the implementation substrate.  
+Sounds simple, but the syntax getting this all right was not obvious, 
+revealing suprising complexity in the template
+system as the language evolved with backwards compatibility in mind and other factors.
+To find an explaination of this the "old way" would be to get lucky by leafing
+through various C++ texts or tangentially related stack overflow posts, or better, ask a Discord group and, hope for a useful reply.  But what could have been hours of frusteration 
+took mere minutes with a LLM.  I handed over code that I _wanted_ to work, 
+but did not, and have it explain _why_ it was not working. There were
+some aspects of the template system it explained that I could not pair with
+a reference to cppreference due to the complexity (and so take with a grain of salt), 
+but I have to wonder how many C++ programmers really know the details behind it all.  
+I'll just point out cppreference's own template_metaprogramming.html page is self-reported as "incomplete".
+But in the end the implementation works, and to my liking.  So it could not have been that wrong.
 
 I found the quality of code review between poor to ok but not unservicable. 
 Importantly, where I would deviate from best practices the models were 

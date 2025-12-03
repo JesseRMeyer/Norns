@@ -38,6 +38,44 @@ int main() {
 	}
 
 	{
+		auto pq = PriorityQueue<u32, f32>(128);
+		pq.Put(1, 1.0f);
+		pq.Put(10, 0.0f);
+		pq.Put(10000, 1000.0f);
+		pq.Put(100, 10.0f);
+		pq.Put(1000, 100.0f);
+		pq.Put(100000, 100000.0f);
+		
+		auto last = pq.TopPriority();
+		pq.Pop();
+		while (not pq.IsEmpty()) {
+			assert(last > pq.TopPriority());
+			last = pq.TopPriority();
+			pq.Pop();
+		}
+		assert(pq.IsEmpty());
+	}
+
+	{
+		auto pq = PriorityQueue<u32, f32, greater>(128);
+		pq.Put(1, 1.0f);
+		pq.Put(10, 0.0f);
+		pq.Put(10000, 1000.0f);
+		pq.Put(100, 10.0f);
+		pq.Put(1000, 100.0f);
+		pq.Put(100000, 100000.0f);
+
+		auto last = pq.TopPriority();
+		pq.Pop();
+		while (not pq.IsEmpty()) {
+			assert(last < pq.TopPriority());
+			last = pq.TopPriority();
+			pq.Pop();
+		}
+		assert(pq.IsEmpty());
+	}
+
+	{
 		u32 bob[5] = {1, 2, 3, 4, 5};
 		auto bob_slice = Slice<u32>(bob, 5);
 

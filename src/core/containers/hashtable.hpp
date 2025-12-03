@@ -40,9 +40,9 @@ public:
 		//PotentiallyReHash();
 
 
-		HashEntries[bin_idx].PushBack((HashEntry){hash, Entries.Size()});
+		HashEntries[bin_idx].PushBack(HashEntry{hash, Entries.Size()});
 
-		return Entries.PushBack((Entry){forward<U>(key), {}}).v;
+		return Entries.PushBack(Entry{forward<U>(key), {}}).v;
 	}
 
 	HashTable&

@@ -125,15 +125,24 @@ protected:
 
 template <typename T, typename MutexType>
 class ThreadSafeFixedSizeQueue: public AtomicFixedSizeQueue<T> {
+	using Base = AtomicFixedSizeQueue<T>;
 public:
-	ThreadSafeFixedSizeQueue(u32 capacity): AtomicFixedSizeQueue<T>(capacity), mutex() {}
+	ThreadSafeFixedSizeQueue(u32 capacity): Base(capacity), mutex() {}
+	ThreadSafeFixedSizeQueue(ThreadSafeFixedSizeQueue& other) = delete;
+	ThreadSafeFixedSizeQueue(ThreadSafeFixedSizeQueue&& other): Base(move(other)) {}
+
+	ThreadSafeFixedSizeQueue&
+	operator=(ThreadSafeFixedSizeQueue& other) = delete;
+
+	ThreadSafeFixedSizeQueue&
+	operator=(ThreadSafeFixedSizeQueue&& other) = default;
 
 	inline T
 	Pop() {
 		mutex.Lock();
 		defer(mutex.Unlock());
 
-		return AtomicFixedSizeQueue<T>::Pop();
+		return Base::Pop();
 	}
 
 	template <typename U>
@@ -142,7 +151,7 @@ public:
 		mutex.Lock();
 		defer(mutex.Unlock());
 
-		AtomicFixedSizeQueue<T>::Put(forward<U>(item));
+		Base::Put(forward<U>(item));
 	}
 
 private:
