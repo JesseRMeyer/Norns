@@ -87,13 +87,13 @@ public:
 	//TODO(Jesse): Handle tombstones.  May benefit from a separate
 	// Vector<bool> to track HashEntry deletions.
 	// For HashEntry, the
-	auto begin() {
+	auto begin() const {
 		return &Entries[0];
 	}
 
 	//TODO(Jesse): next() const that is tombstone aware to skip deletions.
 
-	auto end() {
+	auto end() const {
 		return &Entries[Entries.Size()];
 	}
 
