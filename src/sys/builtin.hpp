@@ -10,6 +10,16 @@
 #undef abs
 #endif
 
+#define NOT_IMPLEMENTED()
+
+#ifdef __arm__
+    #define CPU_PAUSE() __asm__ volatile("yield" ::: "memory")
+#elif defined(__x86_64__)
+	#define CPU_PAUSE() __builtin_ia32_pause()
+#else
+	#define CPU_PAUSE() NOT_IMPLEMENTED()
+#endif
+
 //NOTE(Jesse): Unintuitive to see these as structs
 // but this allows for generic types like
 // PriorityQueue to template over the provided
@@ -31,42 +41,66 @@ struct greater {
 };
 
 template<class T>
-const T& 
+internal const T& 
 min(const T& a, const T& b) {
 	return a <= b ? a : b;
 }
 
 template<class T>
-const T& 
+internal const T& 
 max(const T& a, const T& b) {
 	return a >= b ? a : b;
 }
 
 template<class T>
-const T& 
+internal const T& 
 abs(const T& a) {
 	return a >= 0 ? a : -a;
 }
 
-internal inline
-size_t align(uintptr_t p, uintptr_t alignment) {
+template<class T>
+internal const T& 
+saturate(const T& a) {
+	return a > 1 ? 1 : a < 0 ? 0 : a;
+}
+
+template<class T>
+internal const T& 
+clamp(const T& a, const T& lower, const T& upper) {
+	return a > upper ? upper : a < lower ? lower : a;
+}
+
+internal inline size_t 
+align(uintptr_t p, uintptr_t alignment) {
 	return (alignment - (p & (alignment - 1))) & (alignment - 1);
 }
 
+template <class T, size_t N>
+internal constexpr inline size_t 
+size(const T (&)[N]) noexcept {
+	return N;
+}
+
 template<typename T>
-concept TriviallyCopyable = __is_trivially_copyable(T);
+concept TriviallyCopyable = __is_trivially_copyable(remove_cvref_t<T>);
 
 template<typename T>
 concept Pointer = __is_pointer(T);
 
 template<typename T>
-concept Integral = __is_integral(T);
+concept Integral = __is_integral(remove_cvref_t<T>);
 
 template<typename T>
-concept Real = __is_floating_point(T);
+concept Real = __is_floating_point(remove_cvref_t<T>);
 
 template<typename T>
-concept Arithmetic = Integral<T> or Real<T>;
+concept BaseArithmetic = Integral<T> or Real<T>;
+
+template<typename T>
+concept Arithmetic = BaseArithmetic<T> or
+    requires(T t) {
+        { t.v } -> BaseArithmetic;
+    };
 
 template<typename T>
 concept Enum = __is_enum(T);

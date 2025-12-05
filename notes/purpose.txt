@@ -68,7 +68,7 @@ use of STL, as well as a "Unity" organizational structure that keeps linking tim
 
 Coroutines.
 
-Const correctness. This may change over time.
+Const correctness.  Tho const is used in a few situations where it's vital, like an iterator returned from a HashTable's Find() of a key/value pair as mutating the key would be disasterous.
 
 --
 

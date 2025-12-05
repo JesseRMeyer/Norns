@@ -1,7 +1,8 @@
 template <typename T, Arithmetic P, template<typename> typename Comp=less> //NOTE(Jesse): Defaults to max heap
 class Heap {
 public:
-	Heap(int capacity): items(capacity) {}
+	Heap(): items(32) {}
+	Heap(u16 capacity): items(capacity) {}
 
 	u16 inline
 	ParentIdx(u16 child_idx) {

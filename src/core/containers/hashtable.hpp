@@ -1,13 +1,17 @@
 #include "../misc/pcg.hpp"
 
-//TODO(Jesse): Rehash.  Erase.
-
-//NOTE(Jesse): This HashTable OWNS the Keys passed to it.
+//TODO(Jesse): Rehash.  Erase / Deletions
 
 //NOTE(Jesse): Currently admits pointer types but that is bug prone.. //requires (not is_pointer_v<K>) //HashTable<K, V> requires K to be a non-pointer type."
 template <typename K, typename V> 
 class HashTable {
 public:
+	struct Entry {
+		K k;
+		V v;
+		//b32 deleted;
+	};
+
 	HashTable(): Entries(1024), HashEntries(256) {
 		BuildHashEntries(4);
 	}	
@@ -17,6 +21,27 @@ public:
 	}
 
 	HashTable(HashTable&& other): Entries(move(other.Entries)), HashEntries(move(other.HashEntries)) {}
+
+	template <typename U>
+	Entry const * const
+	Find(U&& key) requires Hashable<K> or IsSliceCompatible<K> {
+		u32 hash = Hash<K>{}(key) | 1u;
+
+		u32 bin_idx = hash % HashEntries.Capacity();
+		for (auto& b: HashEntries[bin_idx]) {
+			if (b.hash != hash) {
+				continue;
+			}
+
+			if (Entries[b.entry_idx].k != key) {
+				continue;
+			}
+
+			return &Entries[b.entry_idx];
+		}
+
+		return end();
+	}
 
 	template <typename U>
 	V& 
@@ -38,7 +63,6 @@ public:
 		}
 
 		//PotentiallyReHash();
-
 
 		HashEntries[bin_idx].PushBack(HashEntry{hash, Entries.Size()});
 
@@ -63,26 +87,31 @@ public:
 	//TODO(Jesse): Handle tombstones.  May benefit from a separate
 	// Vector<bool> to track HashEntry deletions.
 	// For HashEntry, the
-	auto begin() const {
+	auto begin() {
 		return &Entries[0];
 	}
 
 	//TODO(Jesse): next() const that is tombstone aware to skip deletions.
 
-	auto end() const {
+	auto end() {
 		return &Entries[Entries.Size()];
+	}
+
+	inline bool
+	Found(Entry const * const e) {
+		return (e < end()) and (e >= begin());
+	}
+
+	inline u32 
+	Size() {
+		//TODO(Jesse): Handle deletions
+		return Entries.Size();
 	}
 
 private:
 	struct HashEntry {
 		u32 hash;
 		u32 entry_idx;
-	};
-
-	struct Entry {
-		K k;
-		V v;
-		//b32 deleted;
 	};
 
 	f32 

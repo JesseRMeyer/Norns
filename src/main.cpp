@@ -3,9 +3,8 @@
 struct GameInitializePayload {
 	SharedPtr<ThreadSafeFixedSizeQueue<os::Window::Events, os::Futex>> window_event_queue;
 	SharedPtr<os::Surface> surface;
+	SharedPtr<StringStream> logger;
 };
-
-StringStream logger;
 
 #include "game/game.cpp"
 
@@ -20,12 +19,14 @@ int main() {
 
 	auto window_event_queue = SharedPtr<ThreadSafeFixedSizeQueue<os::Window::Events, os::Futex>>(256);
 
+	auto logger = SharedPtr<StringStream>{};
 	GameInitializePayload game_payload = {
 		window_event_queue,
 		window.GetSurface(),
+		logger,
 	};
 
-	auto game_thread = os::Thread((void*)game, &game_payload);
+	auto game_thread = os::Thread((void*)Game, &game_payload);
 
 	bool running = true;
 	while (running) {

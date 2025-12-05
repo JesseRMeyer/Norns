@@ -1,6 +1,7 @@
 void _Wait() {
 	while (s->lock.exchange(LOCKED) == LOCKED) {
 		syscall(SYS_futex, &s->lock, FUTEX_WAIT | FUTEX_PRIVATE_FLAG, LOCKED, 0, 0, 0);
+		CPU_PAUSE();
 	}
 }
 

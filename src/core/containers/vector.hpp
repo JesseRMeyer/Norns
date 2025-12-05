@@ -47,6 +47,13 @@ public:
 		return *this;
 	}
 
+	void
+	Reverse() {
+		for (u32 idx = 0; idx < size / 2; ++idx) {
+			swap(data[idx], data[size - 1 - idx]);
+		}
+	}
+
 	inline bool
 	HasRoom() {
 		return size < capacity;

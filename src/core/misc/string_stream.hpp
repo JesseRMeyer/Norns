@@ -6,8 +6,7 @@
 
 class StringStream {
 public:
-	StringStream() {}
-
+	StringStream() = default;
 	StringStream(StringStream& other) = delete;
 	StringStream(StringStream&& other) = delete;
 

@@ -58,7 +58,7 @@ A few common or more recent ideas not explored deeply, if at all:
 Exceptions.  They are disabled at the compiler flag level. 
 While I do have serious reservations about the use of exceptions for the purpose of handling 
 expected error cases (an all too common use for them in practice), 
-this was ultimately decided to simplify the scope of the project.  
+this was ultimately decided to simplify the scope of the project.
 In principle the entire codebase is Exception Safe.
 
 Modules.  These complicated the build system significantly and didn't
@@ -68,7 +68,7 @@ use of STL, as well as a "Unity" organizational structure that keeps linking tim
 
 Coroutines.
 
-Const correctness. This may change over time.
+Const correctness.  Tho const is used in a few situations where it's vital, like an iterator returned from a HashTable's Find() of a key/value pair as mutating the key would be disasterous.
 
 --
 

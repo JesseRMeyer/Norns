@@ -26,7 +26,7 @@ private:
 	
 	internal inline MemoryManager&
 	GetInstance() {
-		thread_local global MemoryManager instance;
+		thread_local MemoryManager instance;
 		return instance;
 	}
 
@@ -37,9 +37,6 @@ private:
 		//NOTE(Jesse): tlsf has been configured to be on ASAN's ignore list
 		allocator = tlsf_create_with_pool(p, DEFAULT_ALLOCATION_BYTES_MAX);
 	}
-
-	MemoryManager(MemoryManager& other) = delete;
-	MemoryManager(MemoryManager&& other) = delete;
 
 	~MemoryManager() {
 		ASAN_UNPOISON(allocator, DEFAULT_ALLOCATION_BYTES_MAX);
@@ -53,9 +50,20 @@ private:
 		allocator = nullptr;
 	}
 
+	MemoryManager(MemoryManager& other) = delete;
+	MemoryManager(MemoryManager&& other) = delete;
+
 	tlsf_t allocator;
 };
 
+//NOTE(Jesse): Apparently thread_local variable destructors occur
+// _before_ "standard" global variable destructors.  This is kind of bad here
+// when objects being destroyed assume their memory is still valid, but here,
+// since each thread has its own MemoryManager, the manager is destroyed
+// before their thread's global variables.  In practice this is harmless,
+// because the memory would be made invalid / freed anyway, but, this causes
+// a segfault during process exit if, for example, there is a shared StringStream
+// across the main thread and aux threads.
 thread_local auto& __memory_manager = MemoryManager::Initialize();
 
 void *

@@ -1,10 +1,47 @@
 #include "../core/core.hpp"
 
 //TODO(Jesse): Install signal handler and test fail cases
+#include "../game/path_finding/a_star.cpp"
 
 int main() {
 	StringStream logger;
 	defer(logger << "All tests passed or failed successfully!");
+
+	{
+		GridCell answer[4] = {
+			{3, 0}, {2, 0}, {1, 0}, {0, 0}
+		};
+
+		GridCell goal = {
+			0, 0,
+		};
+
+		GridCell start = {
+			3, 0,
+		};
+
+		u8 grid_memory[1][4] = {};
+		Grid2D<u8> cost_grid = {(u8*)grid_memory, size(grid_memory[0]), size(grid_memory)};
+		for (u16 y = 0; y < size(grid_memory); ++y) {
+			for (u16 x = 0; x < size(grid_memory[0]); ++x) {
+				cost_grid[GridCell{x, y}] = x;
+			}
+		}
+
+		assert(not cost_grid.IsValid(GridCell{-1, -1}));
+		assert(not cost_grid.IsValid(GridCell{0, -1}));
+		assert(not cost_grid.IsValid(GridCell{-1, 0}));
+		assert(cost_grid.IsValid(GridCell{0, 0}));
+
+		auto path = AStar(cost_grid, start, goal);
+		
+		assert(path[0] == start);
+		assert(path.Back() == goal);
+
+		for (u32 p_idx = 0; p_idx < path.Size(); ++p_idx) {
+			assert(path[p_idx] == answer[p_idx]);
+		}
+	}
 
 	{
 		//NOTE(Jesse): Queue uses a head/tail index pair
@@ -18,6 +55,11 @@ int main() {
 		q.Pop();
 		assert(q.HasRoom());
 		assert(q.IsEmpty());
+	}
+
+	{
+		auto v = Vector<u32>();
+		v.Reverse();
 	}
 
 	{

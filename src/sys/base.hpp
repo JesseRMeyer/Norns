@@ -80,10 +80,11 @@ _assert_failed(const char* file, const char* pretty_func, u32 line_number, const
 } assume(cond)
 
 template <typename T>
-void swap(T& a, T& b) {
-    T temp = a;
-    a = b;
-    b = temp;
+void 
+swap(T& a, T& b) {
+    T temp = move(a);
+    a = move(b);
+    b = move(temp);
 }
 
 //NOTE(Jesse): Relies on C++17 move semantic optimization defaults, otherwise we'd apparently need to wrap this.
