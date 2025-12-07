@@ -1,4 +1,4 @@
-![A*](https://github.com/JesseRMeyer/Norns/blob/master/media/astar.gif)
+![AStar](https://github.com/JesseRMeyer/Norns/raw/master/media/astar.gif)
 
 The purpose of this project was to learn common techniques used in
 so called "Modern C++" codebases, including but not limited to:
