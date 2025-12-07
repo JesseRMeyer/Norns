@@ -12,23 +12,19 @@ public:
 		//b32 deleted;
 	};
 
-	HashTable(): Entries(1024), HashEntries(256) {
-		BuildHashEntries(4);
-	}	
-
-	HashTable(u32 capacity): Entries(capacity), HashEntries(capacity / 4) {
-		BuildHashEntries(4);
-	}
-
+	HashTable(): Entries(1024), HashEntries(1024 / 16, 1024 / 16) {}	
+	HashTable(u32 capacity): Entries(capacity), HashEntries(capacity / 16, capacity / 16) {}
 	HashTable(HashTable&& other): Entries(move(other.Entries)), HashEntries(move(other.HashEntries)) {}
 
 	template <typename U>
 	Entry const * const
 	Find(U&& key) requires Hashable<K> or IsSliceCompatible<K> {
-		u32 hash = Hash<K>{}(key) | 1u;
+		u32 hash = Hash<K>{}(key);
+		hash = hash == 0 ? 1 : hash;
 
 		u32 bin_idx = hash % HashEntries.Capacity();
-		for (auto& b: HashEntries[bin_idx]) {
+		auto& hash_bin = HashEntries[bin_idx];
+		for (auto& b: hash_bin) {
 			if (b.hash != hash) {
 				continue;
 			}
@@ -46,11 +42,17 @@ public:
 	template <typename U>
 	V& 
 	operator[](U&& key) requires Hashable<K> or IsSliceCompatible<K> {
+		if (unlikely(LoadFactor() > LoadFactorMax)) {
+			ReHash();
+		}
+
 		//NOTE(Jesse): The 0 hash value is reserved for tombstones (deleted KV pairs).
-		u32 hash = Hash<K>{}(key) | 1u;
+		u32 hash = Hash<K>{}(key);
+		hash = hash == 0 ? 1 : hash;
 
 		u32 bin_idx = hash % HashEntries.Capacity();
-		for (auto& b: HashEntries[bin_idx]) {
+		auto& hash_bin = HashEntries[bin_idx];
+		for (auto& b: hash_bin) {
 			if (b.hash != hash) {
 				continue;
 			}
@@ -62,11 +64,14 @@ public:
 			return Entries[b.entry_idx].v;
 		}
 
-		//PotentiallyReHash();
+		hash_bin.EmplaceBack(hash, Entries.Size());
 
-		HashEntries[bin_idx].PushBack(HashEntry{hash, Entries.Size()});
+		return Entries.EmplaceBack(forward<U>(key), V{}).v;
+	}
 
-		return Entries.PushBack(Entry{forward<U>(key), {}}).v;
+	f32 inline
+	LoadFactor() {
+		return (f32)Entries.Size() / (f32)Entries.Capacity();
 	}
 
 	HashTable&
@@ -84,64 +89,52 @@ public:
 		return *this;
 	}
 
-	//TODO(Jesse): Handle tombstones.  May benefit from a separate
-	// Vector<bool> to track HashEntry deletions.
-	// For HashEntry, the
-	auto begin() const {
+	auto begin() const { //TODO(Jesse): Handle deletions
 		return &Entries[0];
 	}
 
-	//TODO(Jesse): next() const that is tombstone aware to skip deletions.
-
-	auto end() const {
-		return &Entries[Entries.Size()];
+	auto end() const { //TODO(Jesse): Handle deletions
+		return &Entries[0] + Entries.Size();
 	}
 
 	inline bool
 	Found(Entry const * const e) {
-		return (e < end()) and (e >= begin());
+		return (e >= begin()) and (e < end());
 	}
 
 	inline u32 
-	Size() {
-		//TODO(Jesse): Handle deletions
+	Size() { //TODO(Jesse): Handle deletions
 		return Entries.Size();
 	}
 
 private:
 	struct HashEntry {
-		u32 hash;
-		u32 entry_idx;
+		u32 hash = 0;
+		u32 entry_idx = 0;
 	};
 
-	f32 
+	f32 inline
 	GetLoadFactor() { //TODO(Jesse): Factor in tombstone count.
 		return (f32)Entries.Size() / (f32)Entries.Capacity(); 
 	}
 
-	/*
+	no_inline()
 	void 
-	PotentiallyReHash() {
-		f32 load_factor = GetLoadFactor();
-		if (load_factor >= a_max) {
-
-		} 
-		else if (PassedLowWaterMark and load_factor < (a_max / 4.0f)) {
-
+	ReHash() {
+		Vector<Vector<HashEntry>> NewHashEntries(HashEntries.Size() * 2, HashEntries.Size() * 2);
+		for (auto& v_he: HashEntries) {
+			for (auto& he: v_he) {
+				u32 new_bin = he.hash % NewHashEntries.Capacity();
+				NewHashEntries[new_bin].PushBack(move(he));
+			}
 		}
-	}
-	*/
 
-	void
-	BuildHashEntries(u32 capacity) {
-		for (u32 he_idx = 0; he_idx < HashEntries.Capacity(); ++he_idx) {
-			HashEntries[he_idx] = Vector<HashEntry>(capacity);
-		}
+		HashEntries = move(NewHashEntries);
+		Entries.Grow();
 	}
 
-	constexpr internal inline f32 a_max = 0.7f;
+	constexpr internal inline f32 LoadFactorMax = 0.7f;
 
 	Vector<Entry> Entries;
 	Vector<Vector<HashEntry>> HashEntries;
-	bool PassedLowWaterMark = false;
 };

@@ -1,8 +1,11 @@
 template <typename T>
 class Vector {
 public:
-	Vector() = default;
+	Vector(): data(new T[16]), size(0), capacity(16) {}
 	Vector(u32 initial_capacity): data(new T[initial_capacity]{}), size(0), capacity(initial_capacity) {}
+	Vector(u32 initial_size, u32 initial_capacity): data(new T[initial_capacity]{}), size(initial_size), capacity(initial_capacity) {
+		assert(initial_size <= initial_capacity);
+	}
 	Vector(Vector const& other) = delete;
 	Vector(Vector&& other) {
 		data = other.data;
@@ -22,7 +25,7 @@ public:
 	}
 
 	auto end() const {
-		return &data[size];
+		return &data[0] + size;
 	}
 
 	Vector& 
@@ -61,7 +64,7 @@ public:
 
 	inline bool
 	Empty() {
-		return not HasRoom();
+		return size == 0;
 	}
 
 	inline u32
@@ -73,17 +76,41 @@ public:
 	inline T&
 	PushBack(U&& t) {
 		if (not HasRoom()) {
-			capacity *= 2u;
-			data = (T*)Norns_Realloc(data, capacity * sizeof(T));
+			Grow();
 		}
 
 		data[size++] = forward<U>(t);
 		return data[size - 1];
 	}
 
+	template<class... Args> //NOTE(Jesse): Disgusting.
+	inline T&
+	EmplaceBack(Args&&... args) {
+		if (not HasRoom()) {
+			Grow();
+		}
+
+		new (&data[0] + size) T(forward<Args>(args)...);
+		return data[size++];
+	}
+
+	void inline
+	Grow(u8 factor = 2) {
+		capacity *= factor;
+
+		data = (T*)Norns_Realloc(data, capacity * sizeof(T));
+	}
+
 	T& 
 	operator[](u32 idx) {
-		assert(idx < capacity);
+		assert(idx < size);
+
+		return data[idx];
+	}
+
+	T const& 
+	operator[](u32 idx) const {
+		assert(idx < size);
 
 		return data[idx];
 	}
@@ -96,7 +123,7 @@ public:
 	}
 
 	u32 
-	Size() {
+	Size() const {
 		return size;
 	}
 

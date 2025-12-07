@@ -47,3 +47,15 @@ pcg32_init(pcg32_random_t& rng, u64 initial_sequence = 14695981039346656037ull, 
 	rng.state += initial_state;
 	pcg32_random(rng);
 }
+
+struct PCG32Uni01 {
+	PCG32Uni01() {
+		pcg32_init(state, (u64)&state); //NOTE(Jesse): Initialize to the address of state for some semblence of entropy.
+	}
+
+	f32 operator()() {
+		return (f32)((f64)pcg32_random(state) / (f64)u32_max);
+	}
+
+	pcg32_random_t state;
+};

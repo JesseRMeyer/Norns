@@ -78,7 +78,7 @@ public:
 	//
 	// Optionally, the return value can be ignored and Front() used instead.
 	inline T
-	Pop() { 
+	Pop() {
 		assert(not IsEmpty());
 
 		defer(tail_idx = (tail_idx + 1) % capacity);
@@ -127,7 +127,7 @@ template <typename T, typename MutexType>
 class ThreadSafeFixedSizeQueue: public AtomicFixedSizeQueue<T> {
 	using Base = AtomicFixedSizeQueue<T>;
 public:
-	ThreadSafeFixedSizeQueue(u32 capacity): Base(capacity), mutex() {}
+	ThreadSafeFixedSizeQueue(u32 capacity): Base(capacity), mutex(), wait_mutex() {}
 	ThreadSafeFixedSizeQueue(ThreadSafeFixedSizeQueue& other) = delete;
 	ThreadSafeFixedSizeQueue(ThreadSafeFixedSizeQueue&& other): Base(move(other)) {}
 
@@ -140,20 +140,50 @@ public:
 	inline T
 	Pop() {
 		mutex.Lock();
-		defer(mutex.Unlock());
+		defer({
+			mutex.Unlock();
+			
+			if (wait_mutex.IsWaiting()) {
+				wait_mutex.Wake();
+			}
+		});
 
 		return Base::Pop();
+	}
+
+	inline void
+	WaitForItem() {
+		if (not Base::HasItems()) {
+			assert(not wait_mutex.IsWaiting());
+			
+			wait_mutex.Wait();
+		}
+
+		assert(Base::HasItems());
+
+		return;
 	}
 
 	template <typename U>
 	inline void
 	Put(U&& item) {
+		if (Base::IsFull()) {
+			wait_mutex.Wait();
+		}
+
 		mutex.Lock();
-		defer(mutex.Unlock());
+		defer({
+			mutex.Unlock();
+
+			if (wait_mutex.IsWaiting()) {
+				wait_mutex.Wake();
+			}
+		});
 
 		Base::Put(forward<U>(item));
 	}
 
 private:
 	MutexType mutex;
+	MutexType wait_mutex;
 };

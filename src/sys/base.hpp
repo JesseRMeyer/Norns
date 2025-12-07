@@ -68,8 +68,11 @@
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
-[[gnu::noinline]]
-void __attribute__((cold))
+#define no_inline() [[gnu::noinline]]
+#define cold() __attribute__((cold))
+
+no_inline() cold()
+void 
 _assert_failed(const char* file, const char* pretty_func, u32 line_number, const char* cond) {
 	fprintf(stderr, "[ASSERT]: %s: %s: %u: %s\n", file, pretty_func, line_number, cond);
 	*(u8 volatile *)0 = 0;

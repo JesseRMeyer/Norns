@@ -24,8 +24,23 @@ public:
 	}
 
 	void 
-	Lock() {
+	Lock() { //NOTE(Jesse): This waits if the lock cannot be held.
 		_Wait();
+	}
+
+	void
+	Wait() { //NOTE(Jesse): This waits when the lock is held (used to wait for items being added to a collection from another thread).
+		_Sleep();
+	}
+
+	void 
+	Wake() {
+		_Awake();
+	}
+
+	bool 
+	IsWaiting() {
+		return s->lock == WAIT;
 	}
 
 	bool 
@@ -42,15 +57,31 @@ public:
 		return true;
 	}
 
+	bool
+	IsLocked() {
+		return s->lock == LOCKED;
+	}
+
 	void 
 	Unlock() {
 		_Wake();
 	}
 
-	template <typename U>
 	Futex&
-	operator=(U&& other) {
-		s = forward<U>(other->s);
+	operator=(Futex& other) {
+		s = other.s;
+		return *this;
+	}
+
+	Futex&
+	operator=(Futex&& other) {
+		if (this == &other) {
+			return *this;
+		}
+
+		s = move(other.s);
+		other.s = nullptr;
+
 		return *this;
 	}
 
@@ -70,6 +101,9 @@ private:
 
 	constexpr internal i32 UNLOCKED = 0;
 	constexpr internal i32 LOCKED = 1;
+
+	constexpr internal i32 ACTIVE = 0;
+	constexpr internal i32 WAIT = 1;
 
 	#include PLATFORM_CPP(futex/futex)
 };

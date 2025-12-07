@@ -1,5 +1,5 @@
 struct GridCost {
-	u16 v;
+	i16 v;
 
 	constexpr bool
 	operator>=(const GridCost& other) const {
@@ -36,14 +36,21 @@ struct GridCell {
 	u16 x;
 	u16 y;
 
-	constexpr bool
+	constexpr inline bool
 	operator==(const GridCell& other) const {
 		return (x == other.x) and (y == other.y);
 	};
 
-	constexpr GridCost
+	constexpr inline GridCost
 	ManhattanDistanceHeuristic(const GridCell& other) {
 		return {abs((i32)x - (i32)other.x) + abs((i32)y - (i32)other.y)};
+	}
+
+	constexpr inline GridCost
+	EuclidDistanceHeuristic(const GridCell& other) {
+		i32 _x = (i32)other.x - (i32)x;
+		i32 _y = (i32)other.y - (i32)y;
+		return {sqrt(f32(_x * _x) + f32(_y * _y)) + 0.5f};
 	}
 
 	friend StringStream&
@@ -64,22 +71,29 @@ struct GridCell {
 };
 
 template <typename T>
-struct Grid2D { //NOTE(Jesse): 0, 0 is top left, growing down right
-	T* data; //NOTE(Jesse): Grid doesn't manage the grid's memory!
-	u16 x;
-	u16 y;
+class Grid2D { //NOTE(Jesse): 0, 0 is top left, growing down right
+public:
+	Grid2D(T* data, u16 x, u16 y): data(data), x(x), y(y) {}
+
+	u16 GetX() {
+		return x;
+	}
+
+	u16 GetY() {
+		return y;
+	}
 
 	constexpr internal inline u16 INVALID_CELL_IDX = -1;
 	constexpr internal inline GridCell INVALID_CELL = {INVALID_CELL_IDX, INVALID_CELL_IDX};
 
-	GridCost
+	GridCost inline 
 	NeighborCost(GridCell& start, GridCell& neighbor) {
 		assert(start.ManhattanDistanceHeuristic(neighbor).v == 1);
 
-		T start_value = data[Index(start)];
-		T neighbor_value = data[Index(neighbor)];
-		T cost = (i32)neighbor_value - (i32)start_value;
-		return {cost};
+		T& start_value = data[Index(start)];
+		T& neighbor_value = data[Index(neighbor)];
+
+		return {(i32)neighbor_value - (i32)start_value};
 	}
 
 	template <typename U>
@@ -146,12 +160,18 @@ struct Grid2D { //NOTE(Jesse): 0, 0 is top left, growing down right
 	GetNeighbors(GridCell& cell) {
 		return {GetNorthNeighbor(cell), GetEastNeighbor(cell), GetSouthNeighbor(cell), GetWestNeighbor(cell)};
 	}
+
+private:
+	T* data; //NOTE(Jesse): Grid doesn't manage the grid's memory!
+	
+	u16 x;
+	u16 y;
 };
 
 template <typename T>
 Vector<GridCell> 
 AStar(Grid2D<T>& graph, GridCell& start, GridCell& goal) {
-	auto frontier = PriorityQueue<GridCell, GridCost>();
+	auto frontier = PriorityQueue<GridCell, GridCost, greater>();
 	auto came_from = HashTable<GridCell, GridCell>();
 	auto cost_from = HashTable<GridCell, GridCost>();
 
@@ -170,12 +190,12 @@ AStar(Grid2D<T>& graph, GridCell& start, GridCell& goal) {
 				continue;
 			}
 
-			GridCost new_cost = cost_from[current] + graph.NeighborCost(current, next);
+			GridCost new_cost = cost_from[current] + graph.NeighborCost(current, next) + goal.EuclidDistanceHeuristic(next);
 			if (auto next_in = cost_from.Find(next); cost_from.Found(next_in) and new_cost >= next_in->v) {
 				continue;
 			}
 			
-			frontier.Put(next, new_cost + goal.ManhattanDistanceHeuristic(next));
+			frontier.Put(next, new_cost);
 
 			cost_from[next] = new_cost;
 			came_from[next] = current;
@@ -196,8 +216,6 @@ AStar(Grid2D<T>& graph, GridCell& start, GridCell& goal) {
 
 		current = next->v;
 	}
-
-	//assert(current == start);
 	
 	if (complete) {
 		path.PushBack(start);

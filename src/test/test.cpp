@@ -8,6 +8,25 @@ int main() {
 	defer(logger << "All tests passed or failed successfully!");
 
 	{
+		u32 history[32] = {};
+		PCG32Uni01 rng_ctx{};
+		
+		u32 num_samples = 1000000;
+		for (u32 s_idx = 0; s_idx < num_samples; ++s_idx) {
+			f32 sample = ((clamp(SampleStandardGaussian(rng_ctx), -4.0f, 4.0f) / 4.0f) + 1.0f) * 0.5f;
+			history[u16(sample * (size(history) - 1))] += 1;
+		}
+
+		for (u16 h_idx = 0; h_idx < size(history) / 2 - 1; ++h_idx) {
+			assert(history[h_idx] < history[h_idx + 1]);
+		}
+
+		for (u16 h_idx = size(history) / 2; h_idx < size(history) - 1; ++h_idx) {
+			assert(history[h_idx] > history[h_idx + 1]);
+		}
+	}
+
+	{
 		GridCell answer[4] = {
 			{3, 0}, {2, 0}, {1, 0}, {0, 0}
 		};
@@ -22,8 +41,8 @@ int main() {
 
 		u8 grid_memory[1][4] = {};
 		Grid2D<u8> cost_grid = {(u8*)grid_memory, size(grid_memory[0]), size(grid_memory)};
-		for (u16 y = 0; y < size(grid_memory); ++y) {
-			for (u16 x = 0; x < size(grid_memory[0]); ++x) {
+		for (u16 y = 0; y < cost_grid.GetY(); ++y) {
+			for (u16 x = 0; x < cost_grid.GetX(); ++x) {
 				cost_grid[GridCell{x, y}] = x;
 			}
 		}

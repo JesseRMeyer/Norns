@@ -75,6 +75,8 @@ Norns_Realloc(void* p, u32 bytes_count) {
 	void* ptr = tlsf_realloc(__memory_manager.GetAllocator(), p, bytes_count);
 	ASAN_UNPOISON(ptr, tlsf_block_size(ptr));
 
+	assert(ptr != nullptr);
+
 	if (p != ptr) { //NOTE(Jesse): If the original allocation could not be resized "inplace", the allocation was moved, so poison the original extent.
 		ASAN_POISON(p, tlsf_block_size(p));
 	}
@@ -87,7 +89,7 @@ operator new(size_t bytes_count, align_val_t alignment) {
 	void* ptr = tlsf_memalign(__memory_manager.GetAllocator(), (size_t)alignment, bytes_count);
 	ASAN_UNPOISON(ptr, tlsf_block_size(ptr));
 
-	assert(ptr);
+	assert(ptr != nullptr);
 
 	return ptr;
 }
@@ -103,7 +105,7 @@ operator new[](size_t bytes_count, align_val_t alignment) {
 	void* ptr = tlsf_memalign(__memory_manager.GetAllocator(), (size_t)alignment, bytes_count);
 	ASAN_UNPOISON(ptr, tlsf_block_size(ptr));
 
-	assert(ptr);
+	assert(ptr != nullptr);
 
 	return ptr;
 }
