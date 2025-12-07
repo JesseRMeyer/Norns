@@ -190,19 +190,19 @@ AStar(Grid2D<T>& graph, GridCell& start, GridCell& goal) {
 				continue;
 			}
 
-			GridCost new_cost = cost_from[current] + graph.NeighborCost(current, next) + goal.EuclidDistanceHeuristic(next);
+			GridCost new_cost = cost_from[current] + graph.NeighborCost(current, next);
 			if (auto next_in = cost_from.Find(next); cost_from.Found(next_in) and new_cost >= next_in->v) {
 				continue;
 			}
 			
-			frontier.Put(next, new_cost);
+			frontier.Put(next, new_cost + goal.EuclidDistanceHeuristic(next));
 
 			cost_from[next] = new_cost;
 			came_from[next] = current;
 		}
 	}
 
-	auto path = Vector<GridCell>(came_from.Size());
+	auto path = Vector<GridCell>(8);
 	auto current = goal;
 	bool complete = true;
 	while (current != start and graph.IsValid(current)) { 

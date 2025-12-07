@@ -178,7 +178,7 @@ public:
 
 	bool
 	operator==(Slice& other) {
-		if (data == other.data and size == other.size) {
+		if (this == &other) {
 			return true;
 		}
 

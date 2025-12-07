@@ -8,6 +8,14 @@ int main() {
 	defer(logger << "All tests passed or failed successfully!");
 
 	{
+		auto bob = new u32[3];
+		u32 sally[4];
+
+		bob = (u32*)Norns_Realloc(bob, sizeof(sally));
+		delete[] bob;
+	}
+
+	{
 		u32 history[32] = {};
 		PCG32Uni01 rng_ctx{};
 		

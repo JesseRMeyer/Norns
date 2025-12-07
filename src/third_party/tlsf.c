@@ -453,6 +453,7 @@ static block_header_t* block_next(const block_header_t* block)
 	block_header_t* next = offset_to_block(block_to_ptr(block),
 		block_size(block) - block_header_overhead);
 	tlsf_assert(!block_is_last(block));
+	//tlsf_assert((size_t)next % 8 == 0);
 	return next;
 }
 
@@ -1000,6 +1001,19 @@ size_t tlsf_block_size_max(void)
 	return block_size_max;
 }
 
+ASAN_IGNORE
+inline
+void *
+tlsf_memcpy(void* __restrict dest, const void* __restrict src, size_t count) {
+	char* d = (char* __restrict)dest;
+	char* s = (char* __restrict)src;
+	for (u32 idx = 0; idx < count; ++idx) {
+		d[idx] = s[idx];
+	}
+
+	return dest;
+}
+
 /*
 ** Overhead of the TLSF structures in a given memory block passed to
 ** tlsf_add_pool, equal to the overhead of a free block and the
@@ -1279,7 +1293,7 @@ void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size)
 			if (p)
 			{
 				const size_t minsize = tlsf_min(cursize, size);
-				memcpy(p, ptr, minsize);
+				tlsf_memcpy(p, ptr, minsize);
 				tlsf_free(tlsf, ptr);
 			}
 		}

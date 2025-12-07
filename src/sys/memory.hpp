@@ -94,6 +94,17 @@ operator new(size_t bytes_count, align_val_t alignment) {
 	return ptr;
 }
 
+void 
+operator delete(void* ptr) noexcept {
+	if (ptr == nullptr) {
+		return;
+	}
+
+	tlsf_free(__memory_manager.GetAllocator(), ptr);
+
+	ASAN_POISON(ptr, tlsf_block_size(ptr));
+}
+
 void* 
 operator new(size_t bytes_count) {
 	//NOTE(Jesse): The standard dictates new's default alignment.
@@ -108,6 +119,11 @@ operator new[](size_t bytes_count, align_val_t alignment) {
 	assert(ptr != nullptr);
 
 	return ptr;
+}
+
+void* 
+operator new[](size_t bytes_count) {
+	return operator new[](bytes_count, align_val_t(alignof(max_align_t)));
 }
 
 void 
@@ -125,14 +141,14 @@ operator delete[](void* ptr, align_val_t alignment) noexcept {
 }
 
 void 
-operator delete(void* ptr) noexcept {
-	if (ptr == nullptr) {
-		return;
-	}
+operator delete[](void* ptr) noexcept {
+	operator delete(ptr);
+}
 
-	tlsf_free(__memory_manager.GetAllocator(), ptr);
-
-	ASAN_POISON(ptr, tlsf_block_size(ptr));
+void 
+operator delete[](void* ptr, size_t bytes_count) noexcept {
+	(void)bytes_count;
+	operator delete(ptr);
 }
 
 void 

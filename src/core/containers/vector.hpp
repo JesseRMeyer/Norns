@@ -83,15 +83,15 @@ public:
 		return data[size - 1];
 	}
 
-	template<class... Args> //NOTE(Jesse): Disgusting.
+	template<typename... Args> //NOTE(Jesse): Disgusting.
 	inline T&
 	EmplaceBack(Args&&... args) {
 		if (not HasRoom()) {
 			Grow();
 		}
 
-		new (&data[0] + size) T(forward<Args>(args)...);
-		return data[size++];
+		//new (&data[0] + size) T(forward<Args>(args)...);
+		return data[size++] = move(T(forward<Args>(args)...));
 	}
 
 	void inline

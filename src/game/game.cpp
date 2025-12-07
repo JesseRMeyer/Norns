@@ -1,7 +1,7 @@
 #include "path_finding/a_star.cpp"
 
-void Process(os::Surface& surface, PCG32Uni01& rng_ctx, Grid2D<u8>& cost_grid) {
-	(void)rng_ctx;
+void 
+Process(os::Surface& surface, PCG32Uni01& rng_ctx, Grid2D<u8>& cost_grid) {
 	//auto now = os::Time::Now();
 
 	//u16 surface_height = surface.GetHeight();
@@ -13,7 +13,7 @@ void Process(os::Surface& surface, PCG32Uni01& rng_ctx, Grid2D<u8>& cost_grid) {
 	};
 
 	GridCell goal = {
-		20, 20,
+		64, 64,
 	};
 
 	auto path = AStar(cost_grid, start, goal);
@@ -42,7 +42,8 @@ void Process(os::Surface& surface, PCG32Uni01& rng_ctx, Grid2D<u8>& cost_grid) {
 
 }
 
-void* Game(void *payload) {
+void* 
+Game(void *payload) {
 	auto& surface = ((GameInitializePayload*)payload)->surface;
 	auto& window_event_queue = ((GameInitializePayload*)payload)->window_event_queue;
 	auto& logger = *((GameInitializePayload*)payload)->logger;
@@ -50,7 +51,7 @@ void* Game(void *payload) {
 	PCG32Uni01 rng_ctx{};
 
 	//NOTE(Jesse): Initialize grid cost memory with Gaussian Noise to stress test A*.
-	u8 grid_memory[32][32] = {};
+	u8 grid_memory[128][128] = {};
 	auto cost_grid = Grid2D<u8>{(u8*)grid_memory, size(grid_memory[0]), size(grid_memory)};
 	for (u16 y = 0; y < cost_grid.GetY(); ++y) {
 		for (u16 x = 0; x < cost_grid.GetX(); ++x) {

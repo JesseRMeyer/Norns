@@ -17,7 +17,7 @@ sqrt(f32 x) { //NOTE(Jesse): Heron's method
 	}
 	
 	while (true) {
-		f32 next_guess = (guess + x / guess) / 2.0f;
+		f32 next_guess = (guess + x / guess) * 0.5f;
 		if (abs(next_guess - guess) < epsilon) {
 			return next_guess;
 		}
