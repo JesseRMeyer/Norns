@@ -114,6 +114,12 @@ public:
 	void inline
 	Grow(u8 factor = 2) {
 		capacity *= factor;
+		capacity = max(u32(8), capacity);
+
+		if (data == nullptr) {
+			data = new T[capacity];
+			return;
+		}
 
 		data = (T*)Norns_Realloc(data, capacity * sizeof(T));
 	}

@@ -79,7 +79,7 @@ _OpenWindow() {
 	{ //NOTE(Jesse): Initialize surface to pink, then emit a Present to kick off the event loop.
 		for (u32 y = 0; y < height; ++y) {
 			for (u32 x = 0; x < width; ++x) {
-				surface_pixels[y * width + x] = {0, 255, 255, 0};
+				surface_pixels[y * width + x] = {192, 182, 255, 0};
 			}
 		}
 
@@ -170,15 +170,16 @@ _ProcessEvent(xcb_generic_event_t* event) {
 		} break;
 
 		case XCB_CONFIGURE_NOTIFY: { 
-			fprintf(stdout, "Notify!\n");
-			//NOTE(Jesse): Window Resize and Move events
-			//auto configure_event = (xcb_configure_notify_event_t*)xcb_event
-			//global_window_frame.left = (u16)configure_event.x;
-			//global_window_frame.top = (u16)configure_event.y;
-			//global_window_frame.width = configure_event.width;
-			//global_window_frame.height = configure_event.height;
-			//global_window_frame.right = global_window_frame.left + global_window_frame.width;
-			//global_window_frame.bottom = global_window_frame.top + global_window_frame.height;
+			fprintf(stdout, "Window Resize and Move events\n");
+			auto configure_event = (xcb_configure_notify_event_t*)xcb_event;
+			left = (u16)configure_event->x;
+			top = (u16)configure_event->y;
+			
+			//global_window_frame.width = configure_event->width;
+			//global_window_frame.height = configure_event->height;
+
+			//global_window_frame.right = global_window_frame->left + global_window_frame.width;
+			//global_window_frame.bottom = global_window_frame->top + global_window_frame.height;
 		} break;
 
 		case XCB_KEY_PRESS:
@@ -216,60 +217,62 @@ _ProcessEvent(xcb_generic_event_t* event) {
 			//auto i_s = xcb_keyboard_and_mouse_inputs_to_input_state[keysym]
 			//global_user_input_queue[user_input_queue_count] = i_s
 			//user_input_queue_count += 1
-		}
+		} break;
 
-		case XCB_FOCUS_OUT:
+		case XCB_FOCUS_OUT: {
 			//intrin.atomic_store(&global_application_active, false)
 			//mouse_cursor_show()
+		} break;
 
-		case XCB_FOCUS_IN:
+		case XCB_FOCUS_IN: {
 			//intrin.atomic_store(&global_application_active, true)
 			//mouse_cursor_hide()
+		} break;
 
-		case XCB_EXPOSE:
+		case XCB_EXPOSE: {
 			//expose_event := cast(^xcb.expose_event_t)xcb_event
 			//intrin.atomic_store(&global_application_active, true)
+		} break;
 
-		case XCB_RESIZE_REQUEST:
+		case XCB_RESIZE_REQUEST: {
 			//new_size := cast(^xcb.resize_request_event_t)xcb_event
-	//
+			//
 			//intrin.atomic_store(&global_window_frame.width, new_size.width)
 			//intrin.atomic_store(&global_window_frame.height, new_size.height)
 			//intrin.atomic_store(&global_window_frame.right, global_window_frame.left + global_window_frame.width)
 			//intrin.atomic_store(&global_window_frame.bottom, global_window_frame.top + global_window_frame.height)
+		} break;
 
 		case XCB_BUTTON_PRESS:
-		case XCB_BUTTON_RELEASE:
+		case XCB_BUTTON_RELEASE: {
 			//button_press := cast(^xcb.button_press_event_t)xcb_event
+			//TODO(Jesse): Mouse buttons!
+		} break;
 
-		case XCB_LEAVE_NOTIFY: //NOTE(Jesse): Mouse left the window extents
+		case XCB_LEAVE_NOTIFY: { //NOTE(Jesse): Mouse left the window extents
 			//NOTE(Jesse): This must be tracked otherwise the application will mistakenly believe
 			// that the cursor is always within the application's window
-			//mouse_move_event := cast(^xcb.leave_notify_event_t)xcb_event
-			//new_cursor_pos := [2]u16 {
-			//	cast(u16)mouse_move_event.root_x,
-			//	cast(u16)mouse_move_event.root_y
-			//}
-			//intrin.atomic_store(&global_mouse_pos.x, new_cursor_pos.x)
-			//intrin.atomic_store(&global_mouse_pos.y, new_cursor_pos.y)
+			//NOTE(Jesse): ^^ Really?
+			auto mouse_move_event = (xcb_leave_notify_event_t*)xcb_event;
+			u16 absolute_mouse_coords[2] = {u16(mouse_move_event->root_x), u16(mouse_move_event->root_y)};
+			u16 window_mouse_coords[2] = {
+				(u16)clamp((i32)absolute_mouse_coords[0] - (i32)left, 0, (i32)width),
+				(u16)clamp((i32)absolute_mouse_coords[1] - (i32)top, 0, (i32)height)
+			};
+			
+			return {window_mouse_coords};
+		} break;
 
 		case XCB_MOTION_NOTIFY: {
-			//NOTE(Jesse): The reason we gather "push" mouse inputs through the event loop here
-			// as opposed to a "pull" in the game loop is because the latency in the pull
-			// appears quite severe even tho it is probably significantly less work.
-			// For one, the loop only ever gets the most recent and therefore most relevant mouse location
-			// when it needs it.  While here, we gather ALL mouse motion events.  I suspect
-			// high polling mice generate a huge number of events so there is some churn here.
-			// BUT, this event loop is in a separate thread so it won't slow down the game thread.
-
-			//relative to origin root?
-
-			//NOTE(Jesse): .state is a bitmask of buttons pressed while mouse was in motion
 			auto mouse_motion_event = (xcb_motion_notify_event_t*)xcb_event;
-			u16 mouse_pos[2] = {u16(mouse_motion_event->root_x), u16(mouse_motion_event->root_y)}; 
-			return {mouse_pos};
-			//intrin.atomic_store(&global_mouse_pos.x, new_cursor_pos.x)
-			//intrin.atomic_store(&global_mouse_pos.y, new_cursor_pos.y)
+			
+			u16 absolute_mouse_coords[2] = {u16(mouse_motion_event->root_x), u16(mouse_motion_event->root_y)};
+			u16 window_mouse_coords[2] = {
+				(u16)clamp((i32)absolute_mouse_coords[0] - (i32)left, 0, (i32)width),
+				(u16)clamp((i32)absolute_mouse_coords[1] - (i32)top, 0, (i32)height)
+			};
+			
+			return {window_mouse_coords};
 		} break;
 
 		default: {} break;

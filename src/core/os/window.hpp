@@ -69,28 +69,30 @@ public:
 
 		Event(): kind(Kind::Nil) {}
 
-		Kind&
+		Kind const& 
 		Kind() {
 			return kind;
 		}
 
-		Keyboard&
+		Keyboard const&
 		Key() {
 			return key;
 		}
 
-		Mouse&
+		Mouse const& 
 		MouseStatus() {
 			return mouse.kind;
 		}
 
-		MouseCoords& 
+		MouseCoords const&
 		GetMouseCoords() {
+			//NOTE(Jesse): These are corrected to stay bounded within
+			// the window.
 			return mouse.coords;
 		}
 
 		friend StringStream& 
-		operator<<(StringStream& ss, const Event& e){
+		operator<<(StringStream& ss, Event const& e){
 			char buffer[128] = {};
 			char* str = nullptr;
 			switch (e.kind) {
@@ -171,40 +173,6 @@ public:
 					str = &buffer[0];
 				} break;
 
-				/*
-				case Kind::MouseRightButton: {
-					str = "MouseRightButton";
-				} break;
-
-				case Kind::MouseLeftButton: {
-					str = "MouseLeftButton";
-				} break;
-
-				case Kind::MouseMove: {
-					str = "MouseMove";
-				} break;
-
-				case Kind::EscapeKey: {
-					str = "EscapeKey";
-				} break;
-
-				case Kind::AKey: {
-					str = "AKey";
-				} break;
-
-				case Kind::SKey: {
-					str = "SKey";
-				} break;
-
-				case Kind::WKey: {
-					str = "WKey";
-				} break;
-
-				case Kind::DKey: {
-					str = "DKey";
-				} break;
-				*/
-
 				case Kind::Count: {
 					str = "Count";
 				} break;
@@ -274,6 +242,8 @@ private:
 
 	u16 width = 256;
 	u16 height = 256;
+	u16 top = 0;
+	u16 left = 0;
 
 	constexpr inline internal u32 buffer_count = 1; //TODO(Jesse): Double buffer?
 	constexpr inline internal u16 bytes_per_pixel = sizeof(Surface_RGBA);
