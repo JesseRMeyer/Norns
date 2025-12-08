@@ -76,10 +76,10 @@ _OpenWindow() {
 	present_id = xcb_generate_id(connection);
 	xcb_present_select_input(connection, present_id, window, XCB_PRESENT_EVENT_MASK_COMPLETE_NOTIFY | XCB_PRESENT_EVENT_MASK_IDLE_NOTIFY);
 
-	{ //NOTE(Jesse): Initialize surface to white, then emit a Present to kick off the event loop.
+	{ //NOTE(Jesse): Initialize surface to pink, then emit a Present to kick off the event loop.
 		for (u32 y = 0; y < height; ++y) {
 			for (u32 x = 0; x < width; ++x) {
-				surface_pixels[y * width + x] = {255, 255, 255, 0};
+				surface_pixels[y * width + x] = {0, 255, 255, 0};
 			}
 		}
 
@@ -132,7 +132,7 @@ _DestroyWindow() {
 	surface.GetSurfacePixels() = nullptr;
 }
 
-inline Events
+inline Event
 _ProcessEvent(xcb_generic_event_t* event) {
 	#define xcb_response_type_to_event_id(x) ((x)->response_type & ~0x80)
 	 
@@ -150,7 +150,7 @@ _ProcessEvent(xcb_generic_event_t* event) {
 	#define NORN_XCB_ERROR 0
 
 	if (event == nullptr) {
-		return Events::Nil;
+		return {Event::Kind::Nil};
 	}
 
 	//NOTE(Jesse): XCB is just a poorly designed API.
@@ -165,7 +165,7 @@ _ProcessEvent(xcb_generic_event_t* event) {
 
 		case XCB_GE_GENERIC: {;
 			if (((xcb_ge_generic_event_t*)xcb_event)->event_type == XCB_PRESENT_COMPLETE_NOTIFY) {
-				return Events::Presented;
+				return {Event::Kind::Presented};
 			}
 		} break;
 
@@ -186,28 +186,28 @@ _ProcessEvent(xcb_generic_event_t* event) {
 			auto key_press = (xcb_key_press_event_t*)xcb_event;
 			auto keysym = xcb_key_symbols_get_keysym(keys, key_press->detail, 0);
 			if (keysym == XCB_Escape) {
-				return Events::EscapeKey;
+				return {Event::Keyboard::Escape};
 			}
 
 			switch (keysym) {
 				case 'a': {
-					return Events::AKey;
+					return {Event::Keyboard::A};
 				} break;
 
 				case 'w': {
-					return Events::WKey;
+					return {Event::Keyboard::W};
 				} break;
 
 				case 's': {
-					return Events::SKey;
+					return {Event::Keyboard::S};
 				} break;
 
 				case 'd': {
-					return Events::DKey;
+					return {Event::Keyboard::D};
 				} break;
 
 				default: {
-					return Events::Unsupported;
+					return {Event::Keyboard::Unsupported};
 				}
 			}
 
@@ -253,7 +253,7 @@ _ProcessEvent(xcb_generic_event_t* event) {
 			//intrin.atomic_store(&global_mouse_pos.x, new_cursor_pos.x)
 			//intrin.atomic_store(&global_mouse_pos.y, new_cursor_pos.y)
 
-		case XCB_MOTION_NOTIFY:
+		case XCB_MOTION_NOTIFY: {
 			//NOTE(Jesse): The reason we gather "push" mouse inputs through the event loop here
 			// as opposed to a "pull" in the game loop is because the latency in the pull
 			// appears quite severe even tho it is probably significantly less work.
@@ -265,13 +265,13 @@ _ProcessEvent(xcb_generic_event_t* event) {
 			//relative to origin root?
 
 			//NOTE(Jesse): .state is a bitmask of buttons pressed while mouse was in motion
-			//mouse_motion := cast(^xcb.motion_notify_event_t)xcb_event
-			//new_cursor_pos := [2]u16 {
-			//	cast(u16)mouse_motion.root_x,
-			//	cast(u16)mouse_motion.root_y
-			//}
+			auto mouse_motion_event = (xcb_motion_notify_event_t*)xcb_event;
+			u16 mouse_pos[2] = {u16(mouse_motion_event->root_x), u16(mouse_motion_event->root_y)}; 
+			return {mouse_pos};
 			//intrin.atomic_store(&global_mouse_pos.x, new_cursor_pos.x)
 			//intrin.atomic_store(&global_mouse_pos.y, new_cursor_pos.y)
+		} break;
+
 		default: {} break;
 	}
 
@@ -285,7 +285,7 @@ _ProcessEvent(xcb_generic_event_t* event) {
 
 #undef xcb_response_type_to_event_id
 
-	return Events::Unsupported;
+	return {Event::Kind::Unsupported};
 }
 
 inline void
@@ -294,7 +294,7 @@ _ReleaseEvent(xcb_generic_event_t* event) {
 	event = {};
 }
 
-inline Events
+inline Event
 _WaitAndGetNextEvent() {
 	xcb_generic_event_t* e = xcb_wait_for_event(connection);
 	defer(_ReleaseEvent(e));

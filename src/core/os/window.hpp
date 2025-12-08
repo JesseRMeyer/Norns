@@ -27,16 +27,212 @@ private:
 
 class Window {
 public:
-	enum class Events {
-		Nil,
-		EscapeKey,
-		Presented,
-		AKey,
-		WKey,
-		SKey,
-		DKey,
-		Unsupported,
-		Count,
+	class Event {
+	public:
+		using MouseCoords = u16[2];
+
+		enum class Kind: u8 {
+			Nil,
+			Presented,
+			Keyboard,
+			Mouse,
+			Unsupported,
+			Count,
+		};
+
+		enum class Keyboard: u8 {
+			Escape,
+			A,
+			W,
+			S,
+			D,
+			Unsupported,
+			Count,
+		};
+
+		enum class Mouse: u8 {
+			Move,
+			LeftButton,
+			RightButton,
+			Count,
+		};
+
+		Event(Kind k): kind(k) {
+			//NOTE(Jesse): These kinds require payload
+			assert(k != Kind::Keyboard);
+			assert(k != Kind::Mouse);
+		}
+
+		Event(Keyboard k): kind(Kind::Keyboard), key(k) {}
+		Event(MouseCoords& mc): kind(Kind::Mouse), mouse{Mouse::Move, {mc[0], mc[1]}} {}
+		Event(Mouse m): kind(Kind::Mouse), mouse{m, {}} {}
+
+		Event(): kind(Kind::Nil) {}
+
+		Kind&
+		Kind() {
+			return kind;
+		}
+
+		Keyboard&
+		Key() {
+			return key;
+		}
+
+		Mouse&
+		MouseStatus() {
+			return mouse.kind;
+		}
+
+		MouseCoords& 
+		GetMouseCoords() {
+			return mouse.coords;
+		}
+
+		friend StringStream& 
+		operator<<(StringStream& ss, const Event& e){
+			char buffer[128] = {};
+			char* str = nullptr;
+			switch (e.kind) {
+				case Kind::Nil: {
+					str = "Nil";
+				} break;
+
+				case Kind::Presented: {
+					str = "Presented";
+				} break;
+
+				case Kind::Keyboard: {
+					int characters_written = stbsp_snprintf((char*)&buffer[0], size(buffer), "%s", "Keyboard: ");
+					
+					char* character = "";
+					switch (e.key) {
+						case Keyboard::A: {
+							character = "A";
+						} break;
+						
+						case Keyboard::S: {
+							character = "S";
+						} break;
+						
+						case Keyboard::D: {
+							character = "D";
+						} break;
+
+						case Keyboard::W: {
+							character = "W";
+						} break;
+
+						case Keyboard::Escape: {
+							character = "Escape";
+						} break;
+
+						case Keyboard::Unsupported: {
+							character = "Unsupported";
+						}
+
+						case Keyboard::Count:
+						default: {
+							character = "[ERROR] switch (e.key)";
+						}
+					}
+
+					stbsp_snprintf((char*)&buffer[characters_written], size(buffer) - characters_written, "%s", character);
+					str = &buffer[0];
+				} break;
+
+				case Kind::Mouse: {
+					int characters_written = stbsp_snprintf((char*)&buffer[0], size(buffer), "%s", "Mouse: ");
+					
+					char* mouse_state = nullptr;
+					switch (e.mouse.kind) {
+						case Mouse::Move: {
+							stbsp_snprintf((char*)&buffer[characters_written], size(buffer) - characters_written, "coords x: %d y: %d", e.mouse.coords[0], e.mouse.coords[1]);			
+						} break;
+
+						case Mouse::LeftButton: {
+							mouse_state = "LeftButton";
+						} break;
+						
+						case Mouse::RightButton: {
+							mouse_state = "RightButton";
+						} break;
+						
+						case Mouse::Count:
+						default: {
+							mouse_state = "[ERROR] e.mouse.kind";
+						}
+					}
+
+					if (mouse_state != nullptr) {
+						stbsp_snprintf((char*)&buffer[characters_written], size(buffer) - characters_written, "%s", mouse_state);
+					}
+
+					str = &buffer[0];
+				} break;
+
+				/*
+				case Kind::MouseRightButton: {
+					str = "MouseRightButton";
+				} break;
+
+				case Kind::MouseLeftButton: {
+					str = "MouseLeftButton";
+				} break;
+
+				case Kind::MouseMove: {
+					str = "MouseMove";
+				} break;
+
+				case Kind::EscapeKey: {
+					str = "EscapeKey";
+				} break;
+
+				case Kind::AKey: {
+					str = "AKey";
+				} break;
+
+				case Kind::SKey: {
+					str = "SKey";
+				} break;
+
+				case Kind::WKey: {
+					str = "WKey";
+				} break;
+
+				case Kind::DKey: {
+					str = "DKey";
+				} break;
+				*/
+
+				case Kind::Count: {
+					str = "Count";
+				} break;
+
+				case Kind::Unsupported: {
+					str = "Unsupported";
+				} break;
+
+				default: {
+					str = "[ERROR] Default";
+				} break;
+			}
+
+			ss << str;
+			return ss;
+		}
+
+	private:
+		enum Kind kind;
+
+		union {
+			Keyboard key;
+
+			struct {
+				Mouse kind;
+				MouseCoords coords;
+			} mouse;
+		};
 	};
 
 	Window(): surface(*this) {}
@@ -51,57 +247,8 @@ public:
 		return _OpenWindow();
 	}
 
-	Events WaitAndGetNextEvent() {
+	Event WaitAndGetNextEvent() {
 		return _WaitAndGetNextEvent();
-	}
-
-	friend StringStream& 
-	operator<<(StringStream& ss, const Events& e){
-		char* str = nullptr;
-		switch (e) {
-			case Events::Nil: {
-				str = "Nil";
-			} break;
-
-			case Events::Presented: {
-				str = "Presented";
-			} break;
-
-			case Events::EscapeKey: {
-				str = "EscapeKey";
-			} break;
-
-			case Events::AKey: {
-				str = "AKey";
-			} break;
-
-			case Events::SKey: {
-				str = "SKey";
-			} break;
-
-			case Events::WKey: {
-				str = "WKey";
-			} break;
-
-			case Events::DKey: {
-				str = "DKey";
-			} break;
-
-			case Events::Count: {
-				str = "Count";
-			} break;
-
-			case Events::Unsupported: {
-				str = "Unsupported";
-			} break;
-
-			default: {
-				str = "Default";
-			} break;
-		}
-
-		ss << str;
-		return ss;
 	}
 
 	void Present() {

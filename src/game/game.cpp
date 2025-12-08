@@ -1,7 +1,12 @@
 #include "path_finding/a_star.cpp"
 
+struct GameState {
+	u16 MammaDuck;
+	u16 BabyDucks[12];
+};
+
 void 
-Process(os::Surface& surface, PCG32Uni01& rng_ctx, Grid2D<u8>& cost_grid) {
+Process(os::Surface& surface, PCG32Uni01& rng_ctx, Grid2D<u8>& cost_grid, GameState& game_state) {
 	//auto now = os::Time::Now();
 
 	//u16 surface_height = surface.GetHeight();
@@ -44,10 +49,13 @@ Process(os::Surface& surface, PCG32Uni01& rng_ctx, Grid2D<u8>& cost_grid) {
 
 void* 
 Game(void *payload) {
+	using Event = os::Window::Event;
+
 	auto& surface = ((GameInitializePayload*)payload)->surface;
 	auto& window_event_queue = ((GameInitializePayload*)payload)->window_event_queue;
 	auto& logger = *((GameInitializePayload*)payload)->logger;
 
+	GameState game_state{};
 	PCG32Uni01 rng_ctx{};
 
 	//NOTE(Jesse): Initialize grid cost memory with Gaussian Noise to stress test A*.
@@ -67,12 +75,14 @@ Game(void *payload) {
 		auto e = window_event_queue->Pop();
 		logger << e;
 
-		if (e == os::Window::Events::Nil or e == os::Window::Events::EscapeKey) {
+		if (e.Kind() == Event::Kind::Nil or 
+		   (e.Kind() == Event::Kind::Keyboard and
+			e.Key() == Event::Keyboard::Escape)) {
 			running = false;
 		}
 
-		if (e == os::Window::Events::Presented) { //NOTE(Jesse): VSYNC blank has occured, start next frame!
-			Process(*surface, rng_ctx, cost_grid);
+		if (e.Kind() == Event::Kind::Presented) { //NOTE(Jesse): VSYNC blank has occured, start next frame!
+			Process(*surface, rng_ctx, cost_grid, game_state);
 
 			surface->Present();
 		}

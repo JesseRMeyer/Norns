@@ -1,7 +1,7 @@
 #include "core/core.hpp"
 
 struct GameInitializePayload {
-	SharedPtr<ThreadSafeFixedSizeQueue<os::Window::Events, os::Futex>> window_event_queue;
+	SharedPtr<ThreadSafeFixedSizeQueue<os::Window::Event, os::Futex>> window_event_queue;
 	SharedPtr<os::Surface> surface;
 	SharedPtr<StringStream> logger;
 };
@@ -9,6 +9,8 @@ struct GameInitializePayload {
 #include "game/game.cpp"
 
 int main() {
+	using Event = os::Window::Event;
+
 	auto window = os::Window();
 	window.OpenWindow();
 
@@ -17,7 +19,7 @@ int main() {
 	cursor.Hide(window);
 	defer(cursor.Show(window));
 
-	auto window_event_queue = SharedPtr<ThreadSafeFixedSizeQueue<os::Window::Events, os::Futex>>(256);
+	auto window_event_queue = SharedPtr<ThreadSafeFixedSizeQueue<Event, os::Futex>>(256);
 
 	auto logger = SharedPtr<StringStream>{};
 	GameInitializePayload game_payload = {
@@ -33,12 +35,13 @@ int main() {
 		auto event = window.WaitAndGetNextEvent();
 		window_event_queue->Put(event);
 
-		if (event == os::Window::Events::Nil) {
+		if (event.Kind() == Event::Kind::Nil) {
 			running = false;
 
 			break;
 		}
-		else if (event == os::Window::Events::EscapeKey) {
+		else if (event.Kind() == Event::Kind::Keyboard and 
+				 event.Key() == Event::Keyboard::Escape) {
 			running = false;
 			
 			break;
