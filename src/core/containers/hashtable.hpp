@@ -1,6 +1,6 @@
 #include "../misc/pcg.hpp"
 
-//TODO(Jesse): Rehash.  Erase / Deletions
+//TODO(Jesse): Erase / Deletions
 
 //NOTE(Jesse): Currently admits pointer types but that is bug prone.. //requires (not is_pointer_v<K>) //HashTable<K, V> requires K to be a non-pointer type."
 template <typename K, typename V> 

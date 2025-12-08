@@ -173,54 +173,50 @@ Vector<GridCell>
 AStar(Grid2D<T>& graph, GridCell& start, GridCell& goal) {
 	auto frontier = PriorityQueue<GridCell, GridCost, greater>();
 	auto came_from = HashTable<GridCell, GridCell>();
-	auto cost_from = HashTable<GridCell, GridCost>();
+	auto cost = HashTable<GridCell, GridCost>();
 
 	frontier.Put(start, {0});
 	came_from[start] = Grid2D<T>::INVALID_CELL;
-	cost_from[start] = {0};
+	cost[start] = {0};
 
+	bool complete = false;
 	while (not frontier.IsEmpty()) {
 		auto current = frontier.PopTop();
 		if (current == goal) {
+			complete = true;
 			break;
 		}
 
-		for (auto& next: graph.GetNeighbors(current)) {
-			if (not graph.IsValid(next)) {
+		GridCost current_cost = cost[current];
+		for (auto& neighbor: graph.GetNeighbors(current)) {
+			if (not graph.IsValid(neighbor)) {
 				continue;
 			}
 
-			GridCost new_cost = cost_from[current] + graph.NeighborCost(current, next);
-			if (auto next_in = cost_from.Find(next); cost_from.Found(next_in) and new_cost >= next_in->v) {
+			GridCost new_cost = current_cost + graph.NeighborCost(current, neighbor);
+			if (auto neighbor_it = cost.Find(neighbor); cost.Found(neighbor_it) and new_cost >= neighbor_it->v) {
 				continue;
 			}
 			
-			frontier.Put(next, new_cost + goal.EuclidDistanceHeuristic(next));
-
-			cost_from[next] = new_cost;
-			came_from[next] = current;
+			frontier.Put(neighbor, new_cost + goal.EuclidDistanceHeuristic(neighbor));
+			cost[neighbor] = new_cost;
+			came_from[neighbor] = current;
 		}
 	}
 
-	auto path = Vector<GridCell>(8);
+	if (not complete) {
+		return Vector<GridCell>::Null();
+	}
+
+	auto path = Vector<GridCell>(goal.ManhattanDistanceHeuristic(start).v);
 	auto current = goal;
-	bool complete = true;
 	while (current != start and graph.IsValid(current)) { 
 		path.PushBack(current);
-		
-		auto next = came_from.Find(current);
-		if (not came_from.Found(next)) {
-			complete = false;
-			break;
-		}
-
-		current = next->v;
+		current = came_from.Find(current)->v;
 	}
 	
-	if (complete) {
-		path.PushBack(start);
-		path.Reverse();
-	}
+	path.PushBack(start);
+	path.Reverse();
 
 	return path;
 }

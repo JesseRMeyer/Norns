@@ -56,6 +56,12 @@ private:
 	tlsf_t allocator;
 };
 
+inline 
+void*
+nullptr_wrapper() {
+	return nullptr;
+}
+
 //NOTE(Jesse): Apparently thread_local variable destructors occur
 // _before_ "standard" global variable destructors.  This is kind of bad here
 // when objects being destroyed assume their memory is still valid, but here,
@@ -72,6 +78,11 @@ Norns_Realloc(void* p, u32 bytes_count) {
 		return nullptr;
 	}
 
+	if (bytes_count == 0) {
+		operator delete(p);
+		return nullptr_wrapper();
+	}
+
 	void* ptr = tlsf_realloc(__memory_manager.GetAllocator(), p, bytes_count);
 	ASAN_UNPOISON(ptr, tlsf_block_size(ptr));
 
@@ -86,6 +97,10 @@ Norns_Realloc(void* p, u32 bytes_count) {
 
 void* 
 operator new(size_t bytes_count, align_val_t alignment) {
+	if (bytes_count == 0) {
+		return nullptr_wrapper();
+	}
+
 	void* ptr = tlsf_memalign(__memory_manager.GetAllocator(), (size_t)alignment, bytes_count);
 	ASAN_UNPOISON(ptr, tlsf_block_size(ptr));
 
@@ -100,25 +115,26 @@ operator delete(void* ptr) noexcept {
 		return;
 	}
 
+	auto pbc = tlsf_block_size(ptr);
+	
 	tlsf_free(__memory_manager.GetAllocator(), ptr);
 
-	ASAN_POISON(ptr, tlsf_block_size(ptr));
+	ASAN_POISON(ptr, pbc);
 }
 
 void* 
 operator new(size_t bytes_count) {
+	if (bytes_count == 0) {
+		return nullptr_wrapper();
+	}
+
 	//NOTE(Jesse): The standard dictates new's default alignment.
 	return operator new(bytes_count, align_val_t(alignof(max_align_t)));
 }
 
 void* 
 operator new[](size_t bytes_count, align_val_t alignment) {
-	void* ptr = tlsf_memalign(__memory_manager.GetAllocator(), (size_t)alignment, bytes_count);
-	ASAN_UNPOISON(ptr, tlsf_block_size(ptr));
-
-	assert(ptr != nullptr);
-
-	return ptr;
+	return operator new(bytes_count, alignment);
 }
 
 void* 

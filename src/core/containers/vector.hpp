@@ -6,6 +6,7 @@ public:
 	Vector(u32 initial_size, u32 initial_capacity): data(new T[initial_capacity]{}), size(initial_size), capacity(initial_capacity) {
 		assert(initial_size <= initial_capacity);
 	}
+	Vector(T* d, u32 size, u32 capacity): data(d), size(size), capacity(capacity){}
 	Vector(Vector const& other) = delete;
 	Vector(Vector&& other) {
 		data = other.data;
@@ -18,6 +19,12 @@ public:
 	}
 	~Vector() {
 		Cleanup();
+	}
+
+	global
+	Vector<T>
+	Null() {
+		return Vector<T>(nullptr, 0, 0);
 	}
 
 	auto begin() const {
@@ -48,6 +55,16 @@ public:
 		other.capacity = 0;
 
 		return *this;
+	}
+
+	void
+	Reserve(u32 new_capacity) {
+		if (new_capacity <= capacity) {
+			return;
+		}
+
+		capacity = new_capacity;
+		data = (T*)Norns_Realloc(data, capacity * sizeof(T));
 	}
 
 	void

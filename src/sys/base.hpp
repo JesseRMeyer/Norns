@@ -54,8 +54,8 @@
 
 #else
 
-  #define ASAN_POISON(addr, size)
-  #define ASAN_UNPOISON(addr, size)
+  #define ASAN_POISON(addr, size) (void)size
+  #define ASAN_UNPOISON(addr, size) (void)size
   #define ASAN_IGNORE
 
 #endif
