@@ -1,6 +1,6 @@
 A* Path tracing over a field of gaussian noise to the center pixel.
 
-![AStar](https://github.com/JesseRMeyer/Norns/raw/main/media/astar.gif)
+![AStar](https://github.com/JesseRMeyer/Norns/raw/main/media/ducks_webm.mp4)
 
 The purpose of this project was to learn common techniques used in
 so called "Modern C++" codebases, including but not limited to:
