@@ -1,6 +1,8 @@
-A* Path tracing over a field of gaussian noise to the center pixel.
+12 "ducklings" traversing towards "Mamma Duck".  Event loop log in the background.
+Grid is a field of Gaussian Noise.  Each path is colored yellow.
+Each "duckling" "ticks" at 60hz, and each tick allows each one to move 1 pixel.
 
-[!(AStar)](https://github.com/JesseRMeyer/Norns/raw/main/media/ducks_webm.mp4)
+https://github.com/user-attachments/assets/11be2a4b-fd9c-4db4-9172-ae541d0e1ef0
 
 The purpose of this project was to learn common techniques used in
 so called "Modern C++" codebases, including but not limited to:
