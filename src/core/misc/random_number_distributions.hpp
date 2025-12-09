@@ -12,8 +12,8 @@ SampleGaussian(RNGUni01& rng_ctx, f32 mean, f32 std_dev) {
 
 	f32 u, v, s;
 	do {
-		u = (f32)rng_ctx() * 2.0f - 1.0f;
-		v = (f32)rng_ctx() * 2.0f - 1.0f;
+		u = rng_ctx() * 2.0f - 1.0f;
+		v = rng_ctx() * 2.0f - 1.0f;
 		s = (u * u) + (v * v);
 	} while (s >= 1.0f or s == 0.0f);
 
@@ -36,8 +36,8 @@ SampleStandardGaussian(RNGUni01& rng_ctx) {
 
 	f32 u, v, s;
 	do {
-		u = (f32)rng_ctx() * 2.0f - 1.0f;
-		v = (f32)rng_ctx() * 2.0f - 1.0f;
+		u = rng_ctx() * 2.0f - 1.0f;
+		v = rng_ctx() * 2.0f - 1.0f;
 		s = (u * u) + (v * v);
 	} while (s >= 1.0f or s == 0.0f);
 

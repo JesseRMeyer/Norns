@@ -60,7 +60,7 @@ struct GridCell {
 		#pragma clang diagnostic ignored "-Wformat-extra-args"
 
 		char buffer[32] = {};
-		int characters_written = stbsp_snprintf((char*)&buffer[0], size(buffer), "y: %_$$$d, x: %_$$$d", cell.y, cell.x);
+		int characters_written = stbsp_snprintf((char*)&buffer[0], size(buffer), "GridCell: y: %_$$$d, x: %_$$$d", cell.y, cell.x);
 		(void)characters_written;
 		s << (char*)buffer;
 

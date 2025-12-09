@@ -79,6 +79,19 @@ public:
 	Time(Time&& other) = delete;
 	Time& operator=(Time& other) = delete;
 	Time& operator=(Time&& other) = delete;
+
+	class TimedSection {
+	public:
+		TimedSection(StringStream& s, Nano now): begin(now), ss(s) {}
+		TimedSection(StringStream& s): begin(Now()), ss(s) {}
+		~TimedSection() {
+			ss << NanoToMili(Time::Now() - begin);
+		}
+
+	private:
+		Nano begin;
+		StringStream& ss;
+	};
 	
 private:
 	internal inline Time&
@@ -98,3 +111,4 @@ private:
 };
 
 auto __time_ignored = Time::Now(); //NOTE(Jesse): Instantiate at launch
+

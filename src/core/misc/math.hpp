@@ -1,5 +1,83 @@
 #include "../../third_party/fast_math.hpp"
 
+union V2 {
+	struct {
+		f32 x;
+		f32 y;
+	};
+
+	f32 e[2];
+
+	V2
+	operator+(V2& other) {
+		return {x + other.x, y + other.y};
+	}
+
+	V2
+	operator+(V2&& other) {
+		return {x + other.x, y + other.y};
+	}
+
+	V2
+	operator+(f32 other) {
+		return {x + other, y + other};
+	}
+
+	V2
+	operator-(V2& other) {
+		return {x - other.x, y - other.y};
+	}
+
+	V2
+	operator*(f32 other) {
+		return {x * other, y * other};
+	}
+
+	V2
+	operator/(f32 other) {
+		other = 1.0f / other;
+		return {x * other, y * other};
+	}
+
+	V2&
+	operator+=(V2& other) {
+		x += other.x; 
+		y += other.y;
+		return *this;
+	}
+
+	V2&
+	operator*=(V2& other) {
+		x *= other.x; 
+		y *= other.y;
+		return *this;
+	}
+
+	template <typename U>
+	V2&
+	operator*=(U&& other) {
+		x *= other; 
+		y *= other;
+		return *this;
+	}
+
+	friend StringStream&
+	operator<<(StringStream& s, V2 v) {
+		#pragma clang diagnostic push
+		#pragma clang diagnostic ignored "-Wformat-invalid-specifier"
+		#pragma clang diagnostic ignored "-Wformat-extra-args"
+
+		char buffer[32] = {};
+		int characters_written = stbsp_snprintf((char*)&buffer[0], size(buffer), "V2: y: %_$$$g, x: %_$$$g", (f64)v.y, (f64)v.x);
+		(void)characters_written;
+		s << (char*)buffer;
+
+		#pragma clang diagnostic pop
+
+		return s;
+	}
+};
+
 f32
 sqrt(f32 x) { //NOTE(Jesse): Heron's method
 	(void)ln; //NOTE(Jesse): Ignore - gets rid of "unused function" warning.

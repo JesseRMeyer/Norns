@@ -20,6 +20,11 @@
 	#define CPU_PAUSE() NOT_IMPLEMENTED()
 #endif
 
+void
+ClearConsole() {
+	fprintf(stdout, "\x1B[2J\x1B[H");
+}
+
 //NOTE(Jesse): Unintuitive to see these as structs
 // but this allows for generic types like
 // PriorityQueue to template over the provided

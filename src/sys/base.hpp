@@ -50,7 +50,7 @@
   #define ASAN_POISON(addr, size) __asan_poison_memory_region((addr), (size))
   #define ASAN_UNPOISON(addr, size) __asan_unpoison_memory_region((addr), (size))
   #define ASAN_IGNORE __attribute__((no_sanitize_address))
-  //#define UBSAN_IGNORE __attribute__((no_sanitize_undefined))
+  #define UBSAN_IGNORE __attribute__((no_sanitize("undefined")))
 
 #else
 

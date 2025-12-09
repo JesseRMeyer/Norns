@@ -30,26 +30,19 @@ int main() {
 
 	auto game_thread = os::Thread((void*)Game, &game_payload);
 
-	bool running = true;
-	while (running) {
+	while (true) {
 		auto event = window.WaitAndGetNextEvent();
 		window_event_queue->Put(event);
 
 		if (event.Kind() == Event::Kind::Nil) {
-			running = false;
-
 			break;
 		}
 		else if (event.Kind() == Event::Kind::Keyboard and 
 				 event.Key() == Event::Keyboard::Escape) {
-			running = false;
-			
 			break;
 		}
 
 		if (not game_thread.IsAlive()) {
-			running = false;
-			
 			break;
 		}
 	}
