@@ -9,23 +9,8 @@ union V2 {
 	f32 e[2];
 
 	V2
-	operator+(V2& other) {
-		return {x + other.x, y + other.y};
-	}
-
-	V2
-	operator+(V2&& other) {
-		return {x + other.x, y + other.y};
-	}
-
-	V2
 	operator+(f32 other) {
 		return {x + other, y + other};
-	}
-
-	V2
-	operator-(V2& other) {
-		return {x - other.x, y - other.y};
 	}
 
 	V2
@@ -77,6 +62,16 @@ union V2 {
 		return s;
 	}
 };
+
+V2
+operator+(V2 a, V2 b) {
+	return {a.x + b.x, a.y + b.y};
+}
+
+V2
+operator-(V2 a, V2 b) {
+	return {a.x - b.x, a.y - b.y};
+}
 
 f32
 sqrt(f32 x) { //NOTE(Jesse): Heron's method

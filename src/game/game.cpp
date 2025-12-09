@@ -38,6 +38,11 @@ public:
 		return coords;
 	}
 
+	V2 const&
+	GetVelocity() {
+		return velocity;
+	}
+
 	void
 	SetCoords(f32& x, f32& y) {
 		coords = {x, y};
@@ -58,6 +63,16 @@ public:
 	void
 	SetVelocity(U&& xy) {
 		velocity = forward<U>(xy);
+	}
+
+	void
+	UpdateVelocity(V2 xy, os::Time::Nano& dt) {
+		velocity = (xy - coords) / os::Time::NanoToSeconds(dt);
+	}
+
+	void
+	ShiftCoords(V2 dxy) {
+		coords += dxy;
 	}
 
 private:
@@ -107,6 +122,12 @@ Process(os::Surface& surface, PCG32Uni01& rng_Uni01, Grid2D<u8>& cost_grid, Game
 			continue;
 		}
 
+		//NOTE(Jesse): Instead of each entity possessing a unique "Tick" function
+		// it simply provides a number of ticks to perform.
+		// Now we are free to implement "Tick" however we please.
+		// In this case, it's just loose logic gated by the preceeding conditional.
+		// Somewhat similar to "immediate mode" APIs.
+
 		GridCell start = {
 			clamp(duckling.GetCoordX(), 0.0f, (f32)cost_grid.GetX() - 1.0f), 
 			clamp(duckling.GetCoordY(), 0.0f, (f32)cost_grid.GetY() - 1.0f),
@@ -127,24 +148,16 @@ Process(os::Surface& surface, PCG32Uni01& rng_Uni01, Grid2D<u8>& cost_grid, Game
 
 		//NOTE(Jesse): Randomly peturb duckling coordinate because they embody randomness
 		// but really it's to prevent them from stacking.
-		// Recenter to 0.5 to account for integer truncation. [-1, 1] -> [-0.5, 1.5]
 		V2 jittered_position = {
-			(rng_Uni01() * 2.0f - 1.0f) + 0.5f,
-			(rng_Uni01() * 2.0f - 1.0f) + 0.5f,
+			rng_Uni01() * 2.0f - 1.0f,
+			rng_Uni01() * 2.0f - 1.0f,
 		};
 		
 		//NOTE(Jesse): Use remaining ticks to "jump" ahead in the path.
-		auto& p_node = path[clamp(ticks_remaining, (u8)0, (u8)(path.Size() - 1))];
-		auto tmp = V2{p_node.x, p_node.y};
-
-		logger << ticks_remaining;
-		logger << jittered_position;
-		logger << tmp;
-		logger << tmp + jittered_position;
-
-		auto old_pos = duckling.GetCoords();
-		duckling.SetVelocity((tmp - old_pos));
-		duckling.SetCoords(tmp + jittered_position);
+		auto& p_node = path[clamp(ticks_remaining, (u8)0, (u8)(path.Size() - 1))];		
+		auto p_xy = V2{p_node.x + 0.5f, p_node.y + 0.5f}; //NOTE(Jesse): Shift to center coordinate to prevent effective integer truncation of jitter
+		auto p_dxy = p_xy - duckling.GetCoords();
+		duckling.ShiftCoords(p_dxy + jittered_position);
 	}
 	
 	surface_pixels[goal.y * surface_width + goal.x] = {0, 255, 0, 0};
