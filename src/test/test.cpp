@@ -170,6 +170,8 @@ int main() {
 
 		auto sleep_time = os::Time::NanoToSeconds(ns);
 		assert(abs(sleep_time - actual_sleep_duration) < 0.001f);
+
+		assert(os::Time::SecondsToMili(1) == 1000);
 	}
 
 	{

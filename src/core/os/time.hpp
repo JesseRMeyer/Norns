@@ -32,8 +32,8 @@ public:
 	}
 
 	constexpr internal inline Mili
-	NanoToMiliSeconds(Nano nano) {
-		return (f64)nano / (f64)1E+03 + 0.5;
+	NanoToMili(Nano nano) {
+		return (f64)nano / (f64)1E+06 + 0.5;
 	}
 
 	internal Nano
@@ -67,7 +67,7 @@ public:
 
 	inline internal Mili
 	NowMili() {
-		return NanoToMiliSeconds(Now());
+		return NanoToMili(Now());
 	}
 
 	internal inline void 

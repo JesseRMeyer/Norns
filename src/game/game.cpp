@@ -6,6 +6,8 @@ union V2 {
 		f32 y;
 	};
 
+	f32 e[2];
+
 	V2
 	operator+(V2& other) {
 		return {x + other.x, y + other.y};
@@ -14,6 +16,11 @@ union V2 {
 	V2
 	operator+(V2&& other) {
 		return {x + other.x, y + other.y};
+	}
+
+	V2
+	operator+(f32 other) {
+		return {x + other, y + other};
 	}
 
 	V2
@@ -32,7 +39,27 @@ union V2 {
 		return {x * other, y * other};
 	}
 
-	f32 e[2];
+	V2&
+	operator+=(V2& other) {
+		x += other.x; 
+		y += other.y;
+		return *this;
+	}
+
+	V2&
+	operator*=(V2& other) {
+		x *= other.x; 
+		y *= other.y;
+		return *this;
+	}
+
+	template <typename U>
+	V2&
+	operator*=(U&& other) {
+		x *= other; 
+		y *= other;
+		return *this;
+	}
 };
 
 class Entity {
@@ -96,7 +123,7 @@ struct GameState {
 };
 
 void 
-Process(os::Surface& surface, PCG32Uni01& rng_Uni01, Grid2D<u8>& cost_grid, GameState& game_state) {
+Process(os::Surface& surface, PCG32Uni01& rng_Uni01, Grid2D<u8>& cost_grid, GameState& game_state, StringStream& logger) {
 	auto now = os::Time::Now();
 
 	//u16 surface_height = surface.GetHeight();
@@ -110,6 +137,59 @@ Process(os::Surface& surface, PCG32Uni01& rng_Uni01, Grid2D<u8>& cost_grid, Game
 		}
 	}
 
+	if (false) { //NOTE(Jesse): Debug.  For some bizarre reason, adding a small jitter to Entity positions causes them to not make forward progress to goals in the 4th quadrant.
+		for(int tries = 0; tries < 5; ++tries) {
+			rng_Uni01();
+		}
+
+		u32 historgram[64] = {};
+		for (int idx = 0; idx < 10000; ++idx) {
+			f32 r01 = rng_Uni01();
+			historgram[u32(r01 * size(historgram))] += 1;
+		}
+
+		V2 jittered_position[64] = {};
+		for (int idx = 0; idx < size(jittered_position); ++idx) {
+			jittered_position[idx] = {rng_Uni01(), rng_Uni01()};
+		}
+
+		f32 average_x = 0;
+		f32 average_y = 0;
+		for (int idx = 0; idx < size(jittered_position); ++idx) {
+			average_x += jittered_position[idx].x;
+			average_y += jittered_position[idx].y;
+		}
+
+		average_x /= size(jittered_position);
+		average_y /= size(jittered_position);
+
+		Entity ducklings[128] = {};
+		for (auto& d: Slice(ducklings)) {
+			d.SetXY(V2{32, 32});
+		}
+
+		for (auto& d: Slice(ducklings)) {
+			V2 jittered_position = {
+				rng_Uni01() * 2.0f - 1.0f,// > 0.5f ? 1 : -1,
+				rng_Uni01() * 2.0f - 1.0f,// > 0.5f ? 1 : -1,
+			};
+
+			d.SetXY((V2)d.GetXY() + jittered_position);
+		}
+
+		average_x = 0.0f;
+		average_y = 0.0f;
+		for (auto& d: Slice(ducklings)) {
+			average_x += d.GetX();
+			average_y += d.GetY();
+		}
+
+		average_x /= size(ducklings);
+		average_y /= size(ducklings);
+
+		bool bp;
+	}
+
 	GridCell goal = { //NOTE(Jesse): OK the type casts here are out of control.
 		clamp((u16)game_state.mamma_duck.x, 
 			  (u16)0, 
@@ -121,31 +201,44 @@ Process(os::Surface& surface, PCG32Uni01& rng_Uni01, Grid2D<u8>& cost_grid, Game
 
 	for (auto& duckling: game_state.GetDucklings()) {
 		u8 ticks_remaining = duckling.GetTicksRemaining(now);
-		if (ticks_remaining > 0) {
-			GridCell start = {
-				duckling.GetX(), duckling.GetY()
-			};
-
-			auto path = AStar(cost_grid, start, goal);
-			assert(path[0] == start);
-
-			for (auto& p_xy: path) {
-				surface_pixels[p_xy.y * surface_width + p_xy.x] = {0, 255, 255, 0};
-			}
-
-			surface_pixels[start.y * surface_width + start.x] = {0, 0, 255, 0};
-
-			//NOTE(Jesse): Randomly peturb duckling coordinate because they embody randomness
-			// but really it's to prevent them from stacking.
-			V2 jittered_position = {
-				(rng_Uni01() * 2.0f) - 1.0f,
-				(rng_Uni01() * 2.0f) - 1.0f,
-			};
-
-			//NOTE(Jesse): Use remaining ticks to "jump" ahead in the path.
-			auto& p_node = path[clamp(ticks_remaining, (u8)0, (u8)(path.Size() - 1))];
-			duckling.SetXY(V2{p_node.x, p_node.y});// + (jittered_position * 0.01f));
+		if (ticks_remaining == 0) {
+			continue;
 		}
+
+		GridCell start = {
+			duckling.GetX(), duckling.GetY()
+		};
+
+		surface_pixels[start.y * surface_width + start.x] = {0, 0, 255, 0};
+
+		auto path = AStar(cost_grid, start, goal);
+		if (path.Size() == 0) {
+			continue;
+		}
+
+		assert(path[0] == start);
+
+		for (auto& p_xy: path) {
+			surface_pixels[p_xy.y * surface_width + p_xy.x] = {0, 255, 255, 0};
+		}
+
+		//NOTE(Jesse): Randomly peturb duckling coordinate because they embody randomness
+		// but really it's to prevent them from stacking.
+		//WTF(Jesse): If rng_Uni01 is just rescaled from [0, 1] to [-1, 1] then for some unknown reason
+		// when the goal is in the 4th quadrant (bottom right) then the ducklings basically stall
+		// and don't make forward progress along their path???
+		// But if I threshold it via >= then it's fine????
+		V2 jittered_position = {
+			rng_Uni01() >= 0.5f ? 1 : -1,
+			rng_Uni01() >= 0.5f ? 1 : -1,
+		};
+		
+		//NOTE(Jesse): Use remaining ticks to "jump" ahead in the path.
+		auto& p_node = path[clamp(ticks_remaining, (u8)0, (u8)(path.Size() - 1))];
+		auto tmp = V2{p_node.x, p_node.y} + jittered_position;
+		tmp.x = clamp(tmp.x, 0.0f, (f32)cost_grid.GetX() - 1.0f);
+		tmp.y = clamp(tmp.y, 0.0f, (f32)cost_grid.GetY() - 1.0f);
+		duckling.SetXY(tmp);
 	}
 	
 	surface_pixels[goal.y * surface_width + goal.x] = {0, 255, 0, 0};
@@ -157,6 +250,8 @@ Process(os::Surface& surface, PCG32Uni01& rng_Uni01, Grid2D<u8>& cost_grid, Game
 			cost_grid[GridCell{x, y}] = u8(cost_01 * 10.0f + 0.5f);
 		}
 	}
+
+	logger << os::Time::NanoToMili(os::Time::Now() - now);
 }
 
 void* 
@@ -206,7 +301,7 @@ Game(void *payload) {
 		}
 
 		if (e.Kind() == Event::Kind::Presented) { //NOTE(Jesse): VSYNC blank has occured, start next frame!
-			Process(*surface, rng_Uni01, cost_grid, game_state);
+			Process(*surface, rng_Uni01, cost_grid, game_state, logger);
 
 			surface->Present();
 		}

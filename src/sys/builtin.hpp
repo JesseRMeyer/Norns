@@ -109,11 +109,13 @@ concept Enum = __is_enum(T);
 template<typename T> requires (not is_void_v<T>)
 class Slice {
 public:
-	Slice(T* ptr, u32 size): data(ptr), size(size) {}
 	Slice() = default;
+	Slice(T* ptr, u32 size): data(ptr), size(size) {}
+
+	template <u32 N>
+	Slice(T (&array)[N]): Slice(array, N) {}
 
 	Slice(Slice& other): data(other.data), size(other.size) {}
-
 	Slice(Slice&& other): data(other.data), size(other.size) {
 		other.data = nullptr;
 		other.size = 0;
